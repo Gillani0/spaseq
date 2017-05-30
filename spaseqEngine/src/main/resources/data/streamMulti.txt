@@ -1,0 +1,3 @@
+<http://www.smart.com/power> </Users/sydgillani/Documents/CEPProj/queries/power1.nt> 5
+<http://www.smart.com/environmental> </Users/sydgillani/Documents/CEPProj/queries/environmental1.nt> 5
+<http://www.smart.com/generation> </Users/sydgillani/Documents/CEPProj/queries/generation1.nt> 5

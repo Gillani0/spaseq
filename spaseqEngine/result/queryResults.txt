@@ -1,0 +1,3 @@
+?company http://example/company#eBay   [2900000,2577000]  
+?company http://example/company#eBay ?vol1 50.61
+

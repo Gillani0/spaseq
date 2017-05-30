@@ -1,0 +1,1 @@
+<http://example.org/main>  </Users/kammoun/Documents/workspace/spaseq/stock.data.gen/stockdata.nt> 3
