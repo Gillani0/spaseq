@@ -3,14 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-
+  
 	  <parent>
 		<groupId>org.telecomst.spaseq</groupId>
   <artifactId>spaseq-parent</artifactId>
   <version>1.0-SNAPSHOT</version>
 
 	</parent>
-
 
 	
 
@@ -23,21 +22,41 @@
   <name>spaseqEngine</name>
 		<packaging>jar</packaging>
 	
-	
+	<repositories>
+    <repository>
+        <id>jcthepants-repo</id>
+        <url>https://github.com/JCThePants/mvn-repo/raw/master</url>
+    </repository>
+</repositories>
 	<dependencies>
 
-		<dependency>
-			<groupId>com.mycompany</groupId>
-			<artifactId>spaseqQueryParser</artifactId>
-			<version>1.1-SNAPSHOT</version>
-			<type>jar</type>
-		</dependency>
+	<!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
+<dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-master</artifactId>
+            <version>4.3</version>
+            <type>jar</type>
+        </dependency>
 
-		<dependency>
-		<groupId>com.mycompany</groupId>
-	<artifactId>streamparser</artifactId>
-	<version>1.0-SNAPSHOT</version>
-		</dependency>
+    <dependency>
+        <groupId>com.jcwhatever.bukkit</groupId>
+        <artifactId>NucleusFramework</artifactId>
+        <version>0.6-SNAPSHOT</version>
+    </dependency>
+
+<!-- https://mvnrepository.com/artifact/com.goldmansachs/gs-collections-api -->
+<dependency>
+  <groupId>com.goldmansachs</groupId>
+  <artifactId>gs-collections-api</artifactId>
+  <version>7.0.0</version>
+</dependency>
+
+<dependency>
+  <groupId>com.goldmansachs</groupId>
+  <artifactId>gs-collections</artifactId>
+  <version>7.0.0</version>
+</dependency>
+
 
 		<dependency>
 			<groupId>com.google.guava</groupId>

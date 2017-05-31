@@ -1,1 +1,1 @@
-<http://example.org/main> </Users/sydgillani/Documents/SPAseq2/spaseqmodules/spaseq-parent/IntellCEPEngine/src/main/resources/data/dataFB.nt> 2
+<http://example.org/main> </Users/sydgillani/Documents/SPAseq2/spaseqmodules/spaseq-parent/spaseqEngine/src/main/resources/data/dataFB.nt> 2

@@ -1,3 +1,14 @@
-?company http://example/company#eBay   [2900000,2577000]  
-?company http://example/company#eBay ?vol1 50.61
+company http://example/company#eBay
+
+p1 14.0
+
+vol1 65.61
+
+p2 12.0
+
+vol2 68.61
+
+vol3 69.61
+
+[1643000,2640000]
 

@@ -4,7 +4,7 @@
                         
                        
 
-                        SELECT ?company ?vol1
+                        SELECT ?company ?vol1 ?p3 ?p1 ?p2 ?vol3 ?vol2
                          WITHIN 10 SECONDS 
                  FROM STREAM S1 <http://example.org/main> 
                

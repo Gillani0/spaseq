@@ -10,7 +10,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
-import org.antlr.runtime.RecognitionException;
+import org.antlr.v4.runtime.RecognitionException;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -27,11 +27,11 @@ import edu.telecomstet.cep.query.helpers.QueryDescriptor;
 import edu.telecomstet.cep.query.parser.QueryParser;
 import fr.ujm.curien.cep.inter.face.manager.StreamManager;
 
-
 public class SpaseqMainEngine {
 	public static void main(String[] args) throws IOException,
 			RecognitionException, ParseException,
-			DatatypeConfigurationException {
+			DatatypeConfigurationException,
+			org.antlr.runtime.RecognitionException {
 
 		DictionaryOpImpl dictimpl = new DictionaryOpImpl();
 		BlockingQueue<GraphEvent> queue = new ArrayBlockingQueue<GraphEvent>(
@@ -50,8 +50,11 @@ public class SpaseqMainEngine {
 
 		Option streamType = new Option("st", "streamt", true,
 				"order of the stream, seqeuntial: false , random: true");
-		
-		Option timestamps = new Option("t", "time", true,
+
+		Option timestamps = new Option(
+				"t",
+				"time",
+				true,
 				"take the timestamp from the stream file: false , use the system timestamps: true");
 		// ; inputFile.setRequired(true);
 
@@ -70,10 +73,10 @@ public class SpaseqMainEngine {
 		// options.addOption(processType);
 
 		// ///////
-		 boolean withsystemtimestamp=true;
+		boolean withsystemtimestamp = true;
 		String q = null;
 		String st = null;
-        String kbase="";
+		String kbase = "";
 		boolean order = false;
 		FileInputStream is = null;
 
@@ -81,7 +84,8 @@ public class SpaseqMainEngine {
 
 		try {
 			CommandLineParser parserCLI = new BasicParser();
-			org.apache.commons.cli.CommandLine line = parserCLI.parse(options,args);
+			org.apache.commons.cli.CommandLine line = parserCLI.parse(options,
+					args);
 
 			if (line.hasOption("h")) {
 				// initialise the member variable
@@ -98,17 +102,17 @@ public class SpaseqMainEngine {
 							.println("Cannot find the Query File, please check your path again");
 				}
 			}
-			
-			if(line.hasOption("kb")){
-				kbase= line.getOptionValue("kb");
-			}
-         
-			if(line.hasOption("t")){
-			
-				withsystemtimestamp=Boolean.parseBoolean( line.getOptionValue("t"));
+
+			if (line.hasOption("kb")) {
+				kbase = line.getOptionValue("kb");
 			}
 
-			
+			if (line.hasOption("t")) {
+
+				withsystemtimestamp = Boolean.parseBoolean(line
+						.getOptionValue("t"));
+			}
+
 			if (line.hasOption("s")) {
 				// initialise the member variable
 				// String file = line.getOptionValue( "buildfile" );
@@ -127,21 +131,27 @@ public class SpaseqMainEngine {
 
 		// /////////////////////////////////////
 
-		final QueryDescriptor descriptor = QueryParser.parse(q, dictimpl, kbase);
+		// withsystemtimestamp = true;
+
+		final QueryDescriptor descriptor = QueryParser
+				.parse(q, dictimpl, kbase);
 
 		EngineController myEngineController = new EngineController();
 
 		myEngineController.setDict(dictimpl);
-		myEngineController.setNFADataList(descriptor.getNfaDataList(),descriptor.getPattData());
+		myEngineController.setNFADataList(descriptor.getNfaDataList(),
+				descriptor.getPattData());
 		myEngineController.setConstrcutClaue(descriptor.getConstRules());
 
 		myEngineController.setInputQueue(queue);
 
 		final CountDownLatch latch = new CountDownLatch(2);
 		// TODO add this to options
-      //  boolean withsystemtimestamp=false; ///if FALSE then take the timestamp from the file ELSE if TRUE use the System timestamps
-		StreamManager cepIU = new StreamManager(st, order, dictimpl, queue,withsystemtimestamp);
-	
+		// boolean withsystemtimestamp=false; ///if FALSE then take the
+		// timestamp from the file ELSE if TRUE use the System timestamps
+		StreamManager cepIU = new StreamManager(st, order, dictimpl, queue,
+				withsystemtimestamp);
+
 		cepIU.setLatch(latch);
 		Thread producer = new Thread(cepIU);
 		producer.setName("StreamManager");
@@ -149,7 +159,7 @@ public class SpaseqMainEngine {
 		System.out.println("Stream started...");
 
 		myEngineController.initializeEngine();
-		
+
 		myEngineController.getMyEngine().setLatch(latch);
 		new Thread(myEngineController.getMyEngine()).start();
 
@@ -164,5 +174,5 @@ public class SpaseqMainEngine {
 				opt);
 		System.exit(0);
 	}
-	
+
 }
