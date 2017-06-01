@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package edu.telecomstet.cep.engine.optimised;
+package edu.junkYard;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,11 +34,15 @@ import edu.telecom.stet.cep.datastructure.KBindex;
 import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
+import edu.telecom.stet.cep.events.GraphEvent;
+import edu.telecom.stet.cep.events.MappedEvent;
 import edu.telecomst.graph.processing.ConstrcutCaluse;
-import edu.telecomst.graph.processing.GraphEvent;
-import edu.telecomst.graph.processing.MappedEvent;
 import edu.telecomstet.cep.UI.ResultWriter;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
+import edu.telecomstet.cep.engine.optimised.ConfigFlags;
+import edu.telecomstet.cep.engine.optimised.Profiling;
+import edu.telecomstet.cep.engine.optimised.RunOptimised;
+import edu.telecomstet.cep.engine.optimised.RunPool;
 import edu.telecomstet.cep.knowledgebase.KBRule;
 import edu.telecomstet.cep.nfahelpers2.Edge;
 import edu.telecomstet.cep.nfahelpers2.NFA;
@@ -1710,6 +1714,11 @@ public class EngineOptimised implements Runnable {
 						if (workingState.isNegation() || workingState.isOptional() && result == null) {
 							continue;
 						}
+
+						// result.getR().size();
+
+						System.out.println(result.getR().size());
+						System.out.println(result.getrIndex().size());
 
 						for (long key : result.getrIndex().keySet()) {
 

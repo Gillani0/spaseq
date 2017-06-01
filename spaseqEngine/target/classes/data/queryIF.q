@@ -29,7 +29,7 @@
                   {
                   ?company3 pred:price ?p3.
                   ?company3 pred:volume ?vol3. 
-                  Filter ( ?p3 = ?p1).  
+                   
                   }
            
      

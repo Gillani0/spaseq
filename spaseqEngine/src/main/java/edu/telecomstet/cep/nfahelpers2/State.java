@@ -1,14 +1,9 @@
 package edu.telecomstet.cep.nfahelpers2;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import net.openhft.koloboke.collect.map.hash.HashIntLongMaps;
-import net.openhft.koloboke.collect.map.hash.HashIntObjMaps;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -18,8 +13,10 @@ import edu.telecom.stet.cep.datastructure.KBindex;
 import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
-import edu.telecomst.graph.processing.GraphEvent;
+import edu.telecom.stet.cep.events.GraphEvent;
 import edu.telecomstet.cep.rulesmodel.NFAData;
+import net.openhft.koloboke.collect.map.hash.HashIntLongMaps;
+import net.openhft.koloboke.collect.map.hash.HashIntObjMaps;
 
 /**
  * This class represents a state from NFA.
@@ -34,25 +31,24 @@ public final class State {
 	/**
 	 * The line in the nfa file for this state
 	 */
-	//private String nfaLine;
-   
+	// private String nfaLine;
+
 	/**
 	 * The type of the state, normal, kleene closure or negation
 	 */
-	
-	private boolean partialMatched=false;
+
+	private boolean partialMatched = false;
 	private String stateType;
 
-	//private NFAData statefullnessData;
-	
-	
-	//private long tiptopTime=0;
+	// private NFAData statefullnessData;
+
+	// private long tiptopTime=0;
 	/**
 	 * The event type for this state
 	 */
 	// String eventType;
-	
-	private   HashSet<Integer> stateStatus;
+
+	private HashSet<Integer> stateStatus;
 
 	private String graphType;
 
@@ -96,17 +92,17 @@ public final class State {
 	/**
 	 * Hash Map for the manager state to take care of the Timestamps
 	 */
-	
-	//TODO: check if these timestamps are also removed from the hashmap, when the run is deleted
-	private Map<Integer, Long> _timestampRuns ;
-	//TODO: add another map containing the buffered events w.r.t each run
-	
-	
+
+	// TODO: check if these timestamps are also removed from the hashmap, when
+	// the run is deleted
+	private Map<Integer, Long> _timestampRuns;
+	// TODO: add another map containing the buffered events w.r.t each run
+
 	/**
 	 * HashMap that contains the buffered Event w.r.t to a run
 	 */
-	private Map<Integer, List<GraphEvent>> _bufferdEvents ;
-	
+	private Map<Integer, List<GraphEvent>> _bufferdEvents;
+
 	/**
 	 * The edges from this state
 	 */
@@ -121,21 +117,21 @@ public final class State {
 
 	private boolean isManager;
 	private Multimap<Long, State> substates;
-    private int substatesType; ///1: for Union, and 2: for OR 
-	
-	public State(final List<NFAData> nfadatalist, int stateType){
-		this._nfaData=null;
-		this.isManager=true;
-		this.substatesType=stateType;
-		this.substates=ArrayListMultimap.create();
-		
+	private int substatesType; /// 1: for Union, and 2: for OR
+
+	public State(final List<NFAData> nfadatalist, int stateType) {
+		this._nfaData = null;
+		this.isManager = true;
+		this.substatesType = stateType;
+		this.substates = ArrayListMultimap.create();
+
 		///// Initialise a HashMap to check the timestamp with the run ID
-		this._timestampRuns=  HashIntLongMaps.newMutableMap();
-		
-		///Initialise a HashMap containing the buffered events and the run ID
-		this._bufferdEvents =  HashIntObjMaps.newMutableMap();
-		
-		//this.stateStatus= new HashSet<>();
+		this._timestampRuns = HashIntLongMaps.newMutableMap();
+
+		/// Initialise a HashMap containing the buffered events and the run ID
+		this._bufferdEvents = HashIntObjMaps.newMutableMap();
+
+		// this.stateStatus= new HashSet<>();
 		/////
 		this.stateType = "normal";
 		this.isKleeneClosure = false;
@@ -143,24 +139,22 @@ public final class State {
 		this.edges = new Edge[1];
 		this.edges[0] = new Edge(null, 0);
 		this.evetType = new HashSet<>();
-		
+
 		//////
-		
-		
-		for(NFAData sdata:nfadatalist){
-		//create a state
-			
-			State nState= new State(sdata,sdata.getOrder());
+
+		for (NFAData sdata : nfadatalist) {
+			// create a state
+
+			State nState = new State(sdata, sdata.getOrder());
 			this.evetType.addAll(nState.getEvetType());
-			this.substates.put(sdata.getStreamList().get(0).getMappedStreamURI(),nState);
+			this.substates.put(sdata.getStreamList().get(0).getMappedStreamURI(), nState);
 		}
 	}
-	
+
 	public State(final NFAData nfaData, int order) {
 
-		
-		//System.out.println("NFA ID: "+ order);
-		this.stateStatus= new HashSet<>(); //only create it when you need it
+		// System.out.println("NFA ID: "+ order);
+		this.stateStatus = new HashSet<>(); // only create it when you need it
 		_nfaData = nfaData;
 		this.order = order;
 
@@ -224,9 +218,8 @@ public final class State {
 		if (isKleeneClosure)
 			temp += " I am a kleene closure state";
 		temp += " My state type is: " + this.stateType;
-		//temp += "\n my description file = " + this.nfaLine;
-		return "This is the " + order + " state, requiring events of "
-				+ this.evetType + " event type, " + temp;
+		// temp += "\n my description file = " + this.nfaLine;
+		return "This is the " + order + " state, requiring events of " + this.evetType + " event type, " + temp;
 	}
 
 	/*
@@ -245,75 +238,65 @@ public final class State {
 	 * RDF Based canStartWithEvent
 	 */
 
-	public boolean canStartWithGraphEvent(GraphEvent e,
-			Map<RunStateMap, MultiBidirectionalIndex> cache,
+	public boolean canStartWithGraphEvent(GraphEvent e, Map<RunStateMap, MultiBidirectionalIndex> cache,
 			Map<KBindex, MultiBiMap<Long, SP>> kbcache, int r) throws Exception { // Change
 																					// this
 																					// method
-	//TODO: Check for the negation and Kleene-+ for the first state										// for
-																					// RDF
+		// TODO: Check for the negation and Kleene-+ for the first state // for
+		// RDF
 
-	//	boolean checker = false;
-		//boolean result;
+		// boolean checker = false;
+		// boolean result;
 
-		
-		if(this.evetType.contains(e.getMappedContext())){
-			return  this.edges[0].evaluatePredicateandStatQuery(e, this, cache,kbcache, r);
+		if (this.evetType.contains(e.getMappedContext())) {
+			return this.edges[0].evaluatePredicateandStatQuery(e, this, cache, kbcache, r);
 		}
-		
-		
-			return false;
-		
-		
-		
-	/*	for (Long contextURI : this.evetType) { // /check if the event has the
-												// same context as of the
-												// state's query
-			if (!e.getMappedContext().equals(contextURI)) {
-				checker = false;
 
-			} else {
-				checker = true;
-				break;
-			}
-		}*/
+		return false;
 
-		/**if checker == false and the first state is the negation state, then check the next state and match the event with it, and return 1 , 0, -1
-		
-		*the first state being the kleen-+ doesn't change anything as all the event are match to the first state, and a new run is initiated in case if it matches
-		* so only consider the negation scenario.
-		 * */
-		
-		
-		
+		/*
+		 * for (Long contextURI : this.evetType) { // /check if the event has
+		 * the // same context as of the // state's query if
+		 * (!e.getMappedContext().equals(contextURI)) { checker = false;
+		 * 
+		 * } else { checker = true; break; } }
+		 */
 
-		/*if (!checker && "negation".equals(this.stateType)) {
-			return true;
-		} else if (!checker && !"negation".equals(this.stateType)) {
+		/**
+		 * if checker == false and the first state is the negation state, then
+		 * check the next state and match the event with it, and return 1 , 0,
+		 * -1
+		 * 
+		 * the first state being the kleen-+ doesn't change anything as all the
+		 * event are match to the first state, and a new run is initiated in
+		 * case if it matches so only consider the negation scenario.
+		 */
 
-			return false;
-
-		}*/
+		/*
+		 * if (!checker && "negation".equals(this.stateType)) { return true; }
+		 * else if (!checker && !"negation".equals(this.stateType)) {
+		 * 
+		 * return false;
+		 * 
+		 * }
+		 */
 
 		// TODO: Change over here if the first state is the negation one
 
-	
-
 		// System.out.println("Query Match : "+result);
 
-	/*	if (result && !"negation".equals(this.stateType)) {
+		/*
+		 * if (result && !"negation".equals(this.stateType)) {
+		 * 
+		 * return true;
+		 * 
+		 * } else if (result && "negation".equals(this.stateType)) { return
+		 * false; } else if (!result && !"negation".equals(this.stateType)) {
+		 * return false; } else if (!result &&
+		 * "negation".equals(this.stateType)) { return true; }
+		 */
 
-			return true;
-
-		} else if (result && "negation".equals(this.stateType)) {
-			return false;
-		} else if (!result && !"negation".equals(this.stateType)) {
-			return false;
-		} else if (!result && "negation".equals(this.stateType)) {
-			return true;
-		}*/
-
-		//return false;
+		// return false;
 	}
 
 	/**
@@ -326,70 +309,45 @@ public final class State {
 	/*
 	 * RDF Based canStartWithEvent
 	 */
-/*
-	public boolean canStartWithNextState(GraphEvent e,
-			Map<RunStateMap, MultiBidirectionalIndex> cache,
-			Map<KBindex, MultiBiMap<Long, SP>> kbcache, int r) throws Exception { // Change
-																					// this
-																					// method
-																					// for
-																					// RDF
+	/*
+	 * public boolean canStartWithNextState(GraphEvent e, Map<RunStateMap,
+	 * MultiBidirectionalIndex> cache, Map<KBindex, MultiBiMap<Long, SP>>
+	 * kbcache, int r) throws Exception { // Change // this // method // for //
+	 * RDF
+	 * 
+	 * boolean checker = false; for (Long contextURI : this.evetType) { //
+	 * /check if the event has the // same context as of the // state's query if
+	 * (!e.getMappedContext().equals(contextURI)) { checker = false;
+	 * 
+	 * } else { checker = true; break; } }
+	 * 
+	 * if (!checker) {
+	 * 
+	 * return false; } else if (this.edges[0].evaluatePredicateandStatQuery(e,
+	 * this, cache, kbcache, r)) {
+	 * 
+	 * return true;
+	 * 
+	 * } else { return false; }
+	 * 
+	 * }
+	 */
 
-		boolean checker = false;
-		for (Long contextURI : this.evetType) { // /check if the event has the
-												// same context as of the
-												// state's query
-			if (!e.getMappedContext().equals(contextURI)) {
-				checker = false;
+	public int negationStateProcess(GraphEvent e, Map<RunStateMap, MultiBidirectionalIndex> cache,
+			Map<KBindex, MultiBiMap<Long, SP>> kbcache, int r) throws Exception {
 
-			} else {
-				checker = true;
-				break;
+		if (this.evetType.contains(e.getMappedContext())) {
+
+			if (this.edges[0].evaluatePredicateandStatQuery(e, this, cache, kbcache, r)) {
+				return 0; /// Its matched and its not suppose to be so return 0
 			}
-		}
 
-		if (!checker) {
-
-			return false;
-		} else if (this.edges[0].evaluatePredicateandStatQuery(e, this, cache,
-				kbcache, r)) {
-
-			return true;
-
-		} else {
-			return false;
-		}
-
-	}
-*/	
-	
-	public int negationStateProcess(GraphEvent e,
-			Map<RunStateMap, MultiBidirectionalIndex> cache,
-			Map<KBindex, MultiBiMap<Long, SP>> kbcache, int r) throws Exception{
-		
-		
-		
-		
-		
-		if(this.evetType.contains(e.getMappedContext()) ){
-			
-			
-			if(this.edges[0].evaluatePredicateandStatQuery(e, this, cache,
-					kbcache, r)){
-				return 0; ///Its matched and its not suppose to be so return 0
-			}
-			
 			return 1;
-			
-			
-			
+
 		}
-		
+
 		return 2;
 	}
-	
-	
-	
 
 	/**
 	 * @return the eventType
@@ -458,17 +416,17 @@ public final class State {
 	/**
 	 * @return the nfaLine
 	 */
-//	public String getNfaLine() {
-//		return nfaLine;
-//	}
-//
-//	/**
-//	 * @param nfaLine
-//	 *            the nfaLine to set
-//	 */
-//	public void setNfaLine(String nfaLine) {
-//		this.nfaLine = nfaLine;
-//	}
+	// public String getNfaLine() {
+	// return nfaLine;
+	// }
+	//
+	// /**
+	// * @param nfaLine
+	// * the nfaLine to set
+	// */
+	// public void setNfaLine(String nfaLine) {
+	// this.nfaLine = nfaLine;
+	// }
 
 	/**
 	 * @return the stateType
@@ -624,13 +582,6 @@ public final class State {
 		return substatesType;
 	}
 
-	
-
-	
-
-	
-	
-
 	public boolean isPartialMatched() {
 		return partialMatched;
 	}
@@ -677,5 +628,4 @@ public final class State {
 		return _bufferdEvents;
 	}
 
-	
 }

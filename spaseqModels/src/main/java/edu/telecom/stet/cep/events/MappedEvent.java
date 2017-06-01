@@ -4,7 +4,7 @@
 * To change this template file, choose Tools | Templates
 * and open the template in the editor.
  */
-package edu.telecomst.graph.processing;
+package edu.telecom.stet.cep.events;
 
 import org.semanticweb.yars.nx.BNode;
 import org.semanticweb.yars.nx.Literal;

@@ -2,7 +2,7 @@ package fr.ujm.curien.cep.inter.face.manager;
 
 import java.util.concurrent.BlockingQueue;
 
-import edu.telecomst.graph.processing.GraphEvent;
+import edu.telecom.stet.cep.events.GraphEvent;
 
 public class EventGraphConsumer implements Runnable {
 
@@ -22,12 +22,12 @@ public class EventGraphConsumer implements Runnable {
 				final GraphEvent take = queue.take();
 				++i;
 				if (take.getId() != -1) {
-					
-					if(take.getMapped()==null){
-						System.out.println("k "+ take.getTimeStamp());
+
+					if (take.getMapped() == null) {
+						System.out.println("k " + take.getTimeStamp());
 					}
-					
-					System.out.println("recived ok " + take.getMapped().length +"  "+ i+" " +take.getTimeStamp());
+
+					System.out.println("recived ok " + take.getMapped().length + "  " + i + " " + take.getTimeStamp());
 				} else {
 					break;
 				}

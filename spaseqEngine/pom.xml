@@ -13,12 +13,13 @@
 
 	
 
-	<version>1.1-SNAPSHOT</version>
+	
 
 
 
-   
+     <groupId>com.mycompany</groupId>
   <artifactId>spaseqEngine</artifactId>
+  <version>1.1-SNAPSHOT</version>
   <name>spaseqEngine</name>
 		<packaging>jar</packaging>
 	
@@ -37,7 +38,34 @@
             <version>4.3</version>
             <type>jar</type>
         </dependency>
+<dependency>
 
+ <groupId>com.mycompany</groupId>
+    <artifactId>spaseqModels</artifactId>
+    <version>1.0-SNAPSHOT</version>
+      </dependency>
+        <dependency>
+        <groupId>org.semanticweb.yars</groupId>
+	<artifactId>nxparser</artifactId>
+	<version>1.2.10</version>
+        
+        </dependency>
+        
+         <dependency> 
+    <groupId>com.mycompany</groupId>
+    <artifactId>spaseqQueryParser</artifactId>
+    <version>1.1-SNAPSHOT</version>
+  </dependency>
+  
+  <dependency>
+  
+	<groupId>com.mycompany</groupId>
+	<artifactId>streamparser</artifactId>
+	<version>1.2-SNAPSHOT</version>
+  
+  </dependency>
+  
+  
     <dependency>
         <groupId>com.jcwhatever.bukkit</groupId>
         <artifactId>NucleusFramework</artifactId>

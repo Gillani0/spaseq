@@ -18,13 +18,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.semanticweb.yars.nx.Literal;
 import org.semanticweb.yars.nx.Node;
 import org.semanticweb.yars.nx.Resource;
 import org.semanticweb.yars.nx.parser.NxParser;
 
-import edu.telecomst.graph.processing.GraphEvent;
-import edu.telecomst.graph.processing.MappedEvent;
+import edu.telecom.stet.cep.events.GraphEvent;
+import edu.telecom.stet.cep.events.MappedEvent;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
 import fr.uim.curien.cep.inter.face.beans.StreamFiles;
 import fr.uim.curien.cep.inter.face.beans.TripleFile;
@@ -32,16 +31,16 @@ import fr.ujm.curien.cep.inter.face.parser.StreamDirectorySpliterator;
 
 public class StreamManagerOld implements Runnable {
 
-	private  long START_OF_THE_STREAM; 
+	private long START_OF_THE_STREAM;
 	private final DictionaryOpImpl dicImpl;
 
 	private BlockingQueue<GraphEvent> queue;
-	int counterI=0;
+	int counterI = 0;
 	public int nextToRead = 0;
 	public int nbFile = 0;
 	public int finishedStreams = 0;
 	public NxParser[] readers;
-	private boolean finished=false;
+	private boolean finished = false;
 	// TODO make it graphEvent type
 
 	public List<TripleFile> ListStreamFile = new ArrayList<>();
@@ -49,12 +48,11 @@ public class StreamManagerOld implements Runnable {
 
 	private boolean random;
 
-	  private CountDownLatch latch;
+	private CountDownLatch latch;
 
-	    public void setLatch(CountDownLatch latch) {
-	        this.latch = latch;
-	    }
-	    
+	public void setLatch(CountDownLatch latch) {
+		this.latch = latch;
+	}
 
 	/**
 	 * read from stream files if random=false so the manager will send one
@@ -95,7 +93,7 @@ public class StreamManagerOld implements Runnable {
 	@Override
 	public void run() {
 		this.openReaders();
-		
+
 		if (random) {
 			do {
 				GraphEvent record = this.readRound();
@@ -115,8 +113,9 @@ public class StreamManagerOld implements Runnable {
 
 				if (record != null) {
 					try {
-					//	System.out.println(record.getMappedContext()+ " "+ this.nextToRead);
-						
+						// System.out.println(record.getMappedContext()+ " "+
+						// this.nextToRead);
+
 						this.queue.put(record);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
@@ -126,9 +125,10 @@ public class StreamManagerOld implements Runnable {
 			} while (finishedStreams != nbFile);
 
 			try {
-				//int id, long t,   DictionaryOpImpl d, long  c,List<MappedEvent> mp
-				this.queue.put(new GraphEvent(-1, 0,null, 0,new ArrayList<MappedEvent>()));
-				//latch.countDown();
+				// int id, long t, DictionaryOpImpl d, long c,List<MappedEvent>
+				// mp
+				this.queue.put(new GraphEvent(-1, 0, null, 0, new ArrayList<MappedEvent>()));
+				// latch.countDown();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -153,28 +153,30 @@ public class StreamManagerOld implements Runnable {
 	 * @return the next element to be sent
 	 */
 
-
 	private GraphEvent readRound123() {
-		//	System.out.print(nextToRead);
-			final GraphEvent graph = readLine123(nextToRead);
-			nextToRead++;
-			if (nbFile - finishedStreams != 0)
-				{nextToRead = nextToRead % (nbFile - finishedStreams);
-				//if (nextToRead==0)
-				//System.out.println(" ");
-				}
-
-			return graph;
+		// System.out.print(nextToRead);
+		final GraphEvent graph = readLine123(nextToRead);
+		nextToRead++;
+		if (nbFile - finishedStreams != 0) {
+			nextToRead = nextToRead % (nbFile - finishedStreams);
+			// if (nextToRead==0)
+			// System.out.println(" ");
 		}
+
+		return graph;
+	}
+
 	public GraphEvent readRound() {
-		
+
 		final GraphEvent line = readLine(nextToRead);
 		if (line != null) {
-			if (fileReaderList.size()==0)
-				{finished=true; return line;}
+			if (fileReaderList.size() == 0) {
+				finished = true;
+				return line;
+			}
 			Collections.shuffle(fileReaderList);
 			nextToRead = fileReaderList.get(0);
-			
+
 		} else {
 			if (fileReaderList.size() > 0) {
 				Collections.shuffle(fileReaderList);
@@ -184,8 +186,7 @@ public class StreamManagerOld implements Runnable {
 
 		return line;
 	}
-	
-	
+
 	public GraphEvent readLine(final int i) {
 		long id;
 		Node nxx[];
@@ -193,7 +194,7 @@ public class StreamManagerOld implements Runnable {
 
 		if (readers[i] != null) {
 			if (ListStreamFile.get(i).getId() == -1) {
-				//System.out.println(ListStreamFile.get(i).getStreamId_());
+				// System.out.println(ListStreamFile.get(i).getStreamId_());
 				id = this.dicImpl.addResourcePersistant(new Resource(ListStreamFile.get(i).getStreamId_()));
 				ListStreamFile.get(i).setId(id);
 			} else {
@@ -201,30 +202,30 @@ public class StreamManagerOld implements Runnable {
 			}
 			graphsize = ListStreamFile.get(i).getGraphsize_();
 			final MappedEvent[] mapE = new MappedEvent[graphsize];
-			counterI=0;
+			counterI = 0;
 			while (readers[i].hasNext() && graphsize > 0) {
 				nxx = readers[i].next();
-			//	System.out.print(nxx);
+				// System.out.print(nxx);
 				graphsize--;
 
-				mapE[counterI]=new MappedEvent(nxx, dicImpl);
-				//System.out.println(" internal "+counterI);
+				mapE[counterI] = new MappedEvent(nxx, dicImpl);
+				// System.out.println(" internal "+counterI);
 				counterI++;
 			}
 			if (!readers[i].hasNext()) {
-				
-				readers[i]=null;
-			//	removeElements(readers, bb);
+
+				readers[i] = null;
+				// removeElements(readers, bb);
 				finishedStreams++;
 				fileReaderList.remove(0);
-				
+
 			}
-			return new GraphEvent(1, System.nanoTime(), dicImpl,id,mapE);
+			return new GraphEvent(1, System.nanoTime(), dicImpl, id, mapE);
 		} else {
 			return null;
 		}
 	}
-	
+
 	public GraphEvent readLine123(final int i) {
 		long id;
 		Node nxx[];
@@ -240,7 +241,7 @@ public class StreamManagerOld implements Runnable {
 			}
 
 			if (ListStreamFile.get(i).getId() == -1) {
-				//System.out.println(ListStreamFile.get(i).getStreamId_());
+				// System.out.println(ListStreamFile.get(i).getStreamId_());
 				id = this.dicImpl.addResourcePersistant(new Resource(ListStreamFile.get(i).getStreamId_()));
 				ListStreamFile.get(i).setId(id);
 			} else {
@@ -248,23 +249,24 @@ public class StreamManagerOld implements Runnable {
 			}
 			graphsize = ListStreamFile.get(i).getGraphsize_();
 			final MappedEvent[] mapE = new MappedEvent[graphsize];
-			counterI=0;
+			counterI = 0;
 			while (readers[i].hasNext() && graphsize > 0) {
 				nxx = readers[i].next();
-				//System.out.println(nxx);
+				// System.out.println(nxx);
 				graphsize--;
 
-				mapE[counterI]=new MappedEvent(nxx, dicImpl);
-				//System.out.println(" internal "+counterI);
+				mapE[counterI] = new MappedEvent(nxx, dicImpl);
+				// System.out.println(" internal "+counterI);
 				counterI++;
 			}
-			//System.out.println();
-		
-			return new GraphEvent(1, System.nanoTime(), dicImpl,id,mapE);
+			// System.out.println();
+
+			return new GraphEvent(1, System.nanoTime(), dicImpl, id, mapE);
 		} else {
 			return null;
 		}
 	}
+
 	public NxParser[] removeElements(NxParser[] input, NxParser deleteMe) {
 		List<NxParser> result = new LinkedList<NxParser>();
 
@@ -274,7 +276,6 @@ public class StreamManagerOld implements Runnable {
 
 		return result.toArray(input);
 	}
-
 
 	public static void main(String[] args) throws IOException {
 
@@ -290,6 +291,6 @@ public class StreamManagerOld implements Runnable {
 		EventGraphConsumer evc = new EventGraphConsumer(queue);
 		Thread consumer = new Thread(evc);
 		consumer.setName("Streamconsumer");
-  	consumer.start();
+		consumer.start();
 	}
 }

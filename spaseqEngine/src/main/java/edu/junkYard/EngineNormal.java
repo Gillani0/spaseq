@@ -4,12 +4,11 @@
 * and open the template in the editor.
 */
 
-package edu.telecomstet.cep.engine.optimised;
+package edu.junkYard;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,14 +17,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.semanticweb.yars.nx.Literal;
-import org.semanticweb.yars.nx.Node;
 import org.semanticweb.yars.nx.Resource;
 import org.semanticweb.yars.nx.parser.NxParser;
-
-import net.openhft.koloboke.collect.map.hash.HashObjObjMaps;
 
 import com.jcwhatever.nucleus.collections.MultiBiMap;
 
@@ -33,18 +28,22 @@ import edu.telecom.stet.cep.datastructure.KBindex;
 import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
+import edu.telecom.stet.cep.events.GraphEvent;
+import edu.telecom.stet.cep.events.MappedEvent;
 import edu.telecomst.graph.processing.ConstrcutCaluse;
-import edu.telecomst.graph.processing.GraphEvent;
-import edu.telecomst.graph.processing.GraphTriple;
-import edu.telecomst.graph.processing.MappedEvent;
 import edu.telecomstet.cep.UI.ResultWriter;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
+import edu.telecomstet.cep.engine.optimised.ConfigFlags;
+import edu.telecomstet.cep.engine.optimised.Profiling;
+import edu.telecomstet.cep.engine.optimised.RunOptimised;
+import edu.telecomstet.cep.engine.optimised.RunPool;
 import edu.telecomstet.cep.knowledgebase.KBRule;
 import edu.telecomstet.cep.nfahelpers2.Edge;
 import edu.telecomstet.cep.nfahelpers2.NFA;
 import edu.telecomstet.cep.nfahelpers2.State;
 import edu.telecomstet.cep.rulesmodel.NFAData;
 import edu.telecomstet.cep.rulesmodel.Rule;
+import net.openhft.koloboke.collect.map.hash.HashObjObjMaps;
 
 /**
  *
@@ -57,11 +56,11 @@ public class EngineNormal implements Runnable {
 
 	private List<Rule> constClause;
 
-	//private int dummy = 0;
+	// private int dummy = 0;
 	private BlockingQueue<GraphEvent> queue;
 
 	private long partitionKey;
-	//private long currentTime = 0;
+	// private long currentTime = 0;
 
 	private boolean diffEventorNot;
 	int runCounter;
@@ -73,8 +72,8 @@ public class EngineNormal implements Runnable {
 
 	private NxParser inputS;
 
-	//private int graphsize = 11;
-	//private int counter = 0;
+	// private int graphsize = 11;
+	// private int counter = 0;
 	/**
 	 * RDF Based Event Buffer // Can use a single one or set of buffers
 	 * depending on states
@@ -85,7 +84,7 @@ public class EngineNormal implements Runnable {
 
 	private NFA nfa;
 
-	//private int _stgy;
+	// private int _stgy;
 	// private HashMap<Integer, MultiBiMap<SP, OP> > cache;
 	/**
 	 * The run pool, which is used to reuse the run data structure.
@@ -114,8 +113,6 @@ public class EngineNormal implements Runnable {
 	/**
 	 * The matches
 	 */
-
-	
 
 	public void initialise() {
 		this.resultqueue = new ArrayBlockingQueue<>(10000);
@@ -215,7 +212,6 @@ public class EngineNormal implements Runnable {
 
 		}
 
-		
 		this.finish();
 		// latch.countDown();
 	}
@@ -240,135 +236,113 @@ public class EngineNormal implements Runnable {
 		// Profiling.totalRunTime += (System.nanoTime() - currentTime);
 		Profiling.numberOfEvents += 1;
 	}
-/*
-	public void runEngine() throws Exception {
-
-		if (this._nfaDataList.get(0).getPatterndata().getPattSelection().equals(",")) {
-			ConfigFlags.selectionStrategy = 3;
-		} else {
-			ConfigFlags.selectionStrategy = 1;
-		}
-
-		ConfigFlags.sequenceLength = this.nfa.getSize();
-
-		ConfigFlags.hasNegation = this.nfa.isHasNegation();
-
-		configPartitionBy();
-
-		if (!ConfigFlags.partitionByPred.isEmpty()) {
-			//runPartitionedByEngine();
-		} else {
-			runNormalEngine();
-		}
-
-	}
-
-	*/
-	
 	/*
-	public void runPartitionedByEngine() throws Exception {
+	 * public void runEngine() throws Exception {
+	 * 
+	 * if
+	 * (this._nfaDataList.get(0).getPatterndata().getPattSelection().equals(",")
+	 * ) { ConfigFlags.selectionStrategy = 3; } else {
+	 * ConfigFlags.selectionStrategy = 1; }
+	 * 
+	 * ConfigFlags.sequenceLength = this.nfa.getSize();
+	 * 
+	 * ConfigFlags.hasNegation = this.nfa.isHasNegation();
+	 * 
+	 * configPartitionBy();
+	 * 
+	 * if (!ConfigFlags.partitionByPred.isEmpty()) { //runPartitionedByEngine();
+	 * } else { runNormalEngine(); }
+	 * 
+	 * }
+	 * 
+	 */
 
-		Node[] nxx = null;
-
-		int i = 0;
-
-		int counter = 0;
-		// String context="<http://example.org/main>";
-
-		List<MappedEvent> mapE = new ArrayList<>();
-
-		// this.runSkipTillAnyRDFEngine(); ///map the events over here
-		// long currentTime = 0;
-		System.out.println("Process Started");
-		while (inputS.hasNext()) {
-			nxx = inputS.next();
-
-			mapE.add(new GraphTriple(nxx, this.getDictImpl()).getMappedEvent());
-
-			i++;
-			if (i == graphsize) {
-
-				/// make a new graph over here
-				counter++; /// put it in the adaptive dictionary over here
-				// System.out.println(counter);
-				/// 1 skip till next, 2, skip till any, 3, strict contiguity
-				// System.out.println(checker);
-
-				// this.runGraphEventProcessing(new
-				// GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()),this._stgy);
-				i = 0;
-
-				currentTime = System.nanoTime();
-				//////////
-
-			
-				// replacing this
-				// "this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()"
-				GraphEvent e = null;// new
-									// GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI());
-				evaluateRunsForPartitionContiguity(e);
-				// this.evaluateRunsForPartitionContiguity(new
-				// GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()),this._stgy);
-				if (this.toDeleteRuns.size() > 0) {
-					this.cleanRunsByPartition();
-				}
-				this.createNewRunByPartition(e);
-
-				//////////
-
-				// Profiling.totalRunTime += (System.nanoTime() - currentTime);
-				Profiling.numberOfEvents += 1;
-
-				mapE.clear();
-
-			}
-		}
-
-	}
-*/
 	/*
-	public void runNormalEngine() throws Exception {
-
-		Node[] nxx = null;
-
-		int i = 0;
-		int counter = 0;
-		// String context="<http://example.org/main>";
-
-		List<MappedEvent> mapE = new ArrayList<>();
-
-		// this.runSkipTillAnyRDFEngine(); ///map the events over here
-		// long currentTime = 0;
-		System.out.println("Process Started");
-		while (inputS.hasNext()) {
-			nxx = inputS.next();
-
-			// checker++;
-			// nxx = inputS.next();
-			mapE.add(new GraphTriple(nxx, this.getDictImpl()).getMappedEvent());
-			// tripleSet.add(nxx);
-			i++;
-			if (i == graphsize) {
-				/// make a new graph over here
-				counter++; /// put it in the adaptive dictionary over here
-				/// 1 skip till next, 2, skip till any, 3, strict contiguity
-				// TODO: send the context according to the incoming event by
-				/// replacing this
-				/// "this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()"
-				// this.runGraphEventProcessing(new
-				/// GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()));
-				i = 0;
-				mapE.clear();
-				// this._dictImpl.refresh();
-				// mapE.add(new GraphTriple(nxx,this.getDictImpl()
-				// ).getMappedEvent());
-			}
-		}
-
-		////////////////////////
-
-	}
-*/
+	 * public void runPartitionedByEngine() throws Exception {
+	 * 
+	 * Node[] nxx = null;
+	 * 
+	 * int i = 0;
+	 * 
+	 * int counter = 0; // String context="<http://example.org/main>";
+	 * 
+	 * List<MappedEvent> mapE = new ArrayList<>();
+	 * 
+	 * // this.runSkipTillAnyRDFEngine(); ///map the events over here // long
+	 * currentTime = 0; System.out.println("Process Started"); while
+	 * (inputS.hasNext()) { nxx = inputS.next();
+	 * 
+	 * mapE.add(new GraphTriple(nxx, this.getDictImpl()).getMappedEvent());
+	 * 
+	 * i++; if (i == graphsize) {
+	 * 
+	 * /// make a new graph over here counter++; /// put it in the adaptive
+	 * dictionary over here // System.out.println(counter); /// 1 skip till
+	 * next, 2, skip till any, 3, strict contiguity //
+	 * System.out.println(checker);
+	 * 
+	 * // this.runGraphEventProcessing(new //
+	 * GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this.
+	 * _nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()),this.
+	 * _stgy); i = 0;
+	 * 
+	 * currentTime = System.nanoTime(); //////////
+	 * 
+	 * 
+	 * // replacing this //
+	 * "this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()"
+	 * GraphEvent e = null;// new //
+	 * GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this.
+	 * _nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI());
+	 * evaluateRunsForPartitionContiguity(e); //
+	 * this.evaluateRunsForPartitionContiguity(new //
+	 * GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this.
+	 * _nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()),this.
+	 * _stgy); if (this.toDeleteRuns.size() > 0) { this.cleanRunsByPartition();
+	 * } this.createNewRunByPartition(e);
+	 * 
+	 * //////////
+	 * 
+	 * // Profiling.totalRunTime += (System.nanoTime() - currentTime);
+	 * Profiling.numberOfEvents += 1;
+	 * 
+	 * mapE.clear();
+	 * 
+	 * } }
+	 * 
+	 * }
+	 */
+	/*
+	 * public void runNormalEngine() throws Exception {
+	 * 
+	 * Node[] nxx = null;
+	 * 
+	 * int i = 0; int counter = 0; // String
+	 * context="<http://example.org/main>";
+	 * 
+	 * List<MappedEvent> mapE = new ArrayList<>();
+	 * 
+	 * // this.runSkipTillAnyRDFEngine(); ///map the events over here // long
+	 * currentTime = 0; System.out.println("Process Started"); while
+	 * (inputS.hasNext()) { nxx = inputS.next();
+	 * 
+	 * // checker++; // nxx = inputS.next(); mapE.add(new GraphTriple(nxx,
+	 * this.getDictImpl()).getMappedEvent()); // tripleSet.add(nxx); i++; if (i
+	 * == graphsize) { /// make a new graph over here counter++; /// put it in
+	 * the adaptive dictionary over here /// 1 skip till next, 2, skip till any,
+	 * 3, strict contiguity // TODO: send the context according to the incoming
+	 * event by /// replacing this ///
+	 * "this._nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI()" //
+	 * this.runGraphEventProcessing(new ///
+	 * GraphEvent(counter,System.nanoTime(),mapE,this._dictImpl,this.
+	 * _nfaDataList.get(0).getStreamList().get(0).getMappedStreamURI())); i = 0;
+	 * mapE.clear(); // this._dictImpl.refresh(); // mapE.add(new
+	 * GraphTriple(nxx,this.getDictImpl() // ).getMappedEvent()); } }
+	 * 
+	 * ////////////////////////
+	 * 
+	 * }
+	 */
 	public void runGraphEventProcessing(GraphEvent e) throws CloneNotSupportedException, Exception {
 
 		//// update the incoming edges////////
@@ -422,114 +396,71 @@ public class EngineNormal implements Runnable {
 	 * @param r
 	 * @throws CloneNotSupportedException
 	 */
-/*
-	public void evaluateFB(GraphEvent e, RunOptimised r) throws CloneNotSupportedException, Exception {
-		boolean checkResult = true;
-
-		/// Before check the predicate check if the next state statisfies this
-		/// event or not
-
-		/// if so then do nothing else check it do the following normal stuff///
-
-		if (checkNegationState(e, r)) {
-
-			// if(r.getCurrentState()==2){
-			// System.out.println("Here ");
-			// }
-
-			checkResult = this.checkRDFPredicate(e, r);// check predicate
-
-			// TODO: In case if check result is not true, and the state is the
-			// optional one, then go for it.
-			if (checkOptionalState(r)) {
-				/// if its an optional state, then simply check the checkRrsult
-				checkResult = true;
-			}
-
-			if (checkResult) { // the predicate if ok.
-				checkResult = this.checkTimeWindow(e, r); // the time window is
-															// ok
-				if (checkResult) {// predicate and time window are ok
-
-					/// Check the type of the state
-					/// if its normal then go about the same business, else use
-					/// the kleene start stuff
-
-					// this.rdfbuffer.bufferRDFEvent(e);// add the event to
-					// buffer
-					int oldState = 0; // make them gloabl variables
-					int newState = 0;
-
-					/// Run newRun = this.cloneRun(r); // clone this run
-
-					oldState = r.getCurrentState();
-					r.addGraphEvent(e); // add the event to this run
-					newState = r.getCurrentState(); // Add the Branch Union
-													// operator in add RDF stuff
-					if (oldState == newState) {
-						// this.activeRuns.add(newRun);
-						// }else{//kleene closure
-
-						//
-						if (r.isFull()) {
-							// check match and output match
-							if (r.checkMatch()) {
-								/// close the executor service
-								// shutDownService(newRun);
-								// this.outputMatch(new Match(newRun, this.nfa,
-								/// this.rdfbuffer));
-
-								/// Output the matches events
-								/// this._dictImpl.refresh();
-								outputMatches(e, r);
-								Profiling.numberOfMatches++;
-								// Profiling.totalRunLifeTime +=
-								// (System.nanoTime() - r.getLifeTimeBegin());
-								this.toDeleteRuns.add(r);
-							}
-						} else {
-
-							if (r.checkStateType(e)) {
-								RunOptimised newerRun = this.cloneRun(r);
-
-								newerRun.proceed();
-								// this.activeRuns.add(newerRun );///Addition
-								// for the RDF Matching
-								if (newerRun.isComplete()) {
-									// newerRun.getNfa().getStates()
-									// shutDownService(newerRun);
-									//// close the executor service
-									// this.outputMatch(new Match(r, this.nfa,
-									// this.rdfbuffer));
-									// this._dictImpl.refresh();
-									outputMatches(e, newerRun);
-									Profiling.numberOfMatches++;
-									// Profiling.totalRunLifeTime +=
-									// (System.nanoTime() -
-									// r.getLifeTimeBegin());
-									this.toDeleteRuns.add(newerRun);
-								} else {
-									this.activeRuns.add(newerRun);
-								}
-							}
-						}
-					}
-				} else {
-					this.toDeleteRuns.add(r);
-				}
-
-			}
-
-		} // else{///It could be Kleene clouse state so check if the type of the
-			// state is kleene clouse
-			/// if so then send the event to the next one if the counter of the
-			// kleene state is >=1
-			//// check-proceed
-
-		// checkKleeneProceed( r, e);
-		// }
-	}
-*/
+	/*
+	 * public void evaluateFB(GraphEvent e, RunOptimised r) throws
+	 * CloneNotSupportedException, Exception { boolean checkResult = true;
+	 * 
+	 * /// Before check the predicate check if the next state statisfies this
+	 * /// event or not
+	 * 
+	 * /// if so then do nothing else check it do the following normal stuff///
+	 * 
+	 * if (checkNegationState(e, r)) {
+	 * 
+	 * // if(r.getCurrentState()==2){ // System.out.println("Here "); // }
+	 * 
+	 * checkResult = this.checkRDFPredicate(e, r);// check predicate
+	 * 
+	 * // TODO: In case if check result is not true, and the state is the //
+	 * optional one, then go for it. if (checkOptionalState(r)) { /// if its an
+	 * optional state, then simply check the checkRrsult checkResult = true; }
+	 * 
+	 * if (checkResult) { // the predicate if ok. checkResult =
+	 * this.checkTimeWindow(e, r); // the time window is // ok if (checkResult)
+	 * {// predicate and time window are ok
+	 * 
+	 * /// Check the type of the state /// if its normal then go about the same
+	 * business, else use /// the kleene start stuff
+	 * 
+	 * // this.rdfbuffer.bufferRDFEvent(e);// add the event to // buffer int
+	 * oldState = 0; // make them gloabl variables int newState = 0;
+	 * 
+	 * /// Run newRun = this.cloneRun(r); // clone this run
+	 * 
+	 * oldState = r.getCurrentState(); r.addGraphEvent(e); // add the event to
+	 * this run newState = r.getCurrentState(); // Add the Branch Union //
+	 * operator in add RDF stuff if (oldState == newState) { //
+	 * this.activeRuns.add(newRun); // }else{//kleene closure
+	 * 
+	 * // if (r.isFull()) { // check match and output match if (r.checkMatch())
+	 * { /// close the executor service // shutDownService(newRun); //
+	 * this.outputMatch(new Match(newRun, this.nfa, /// this.rdfbuffer));
+	 * 
+	 * /// Output the matches events /// this._dictImpl.refresh();
+	 * outputMatches(e, r); Profiling.numberOfMatches++; //
+	 * Profiling.totalRunLifeTime += // (System.nanoTime() -
+	 * r.getLifeTimeBegin()); this.toDeleteRuns.add(r); } } else {
+	 * 
+	 * if (r.checkStateType(e)) { RunOptimised newerRun = this.cloneRun(r);
+	 * 
+	 * newerRun.proceed(); // this.activeRuns.add(newerRun );///Addition // for
+	 * the RDF Matching if (newerRun.isComplete()) { //
+	 * newerRun.getNfa().getStates() // shutDownService(newerRun); //// close
+	 * the executor service // this.outputMatch(new Match(r, this.nfa, //
+	 * this.rdfbuffer)); // this._dictImpl.refresh(); outputMatches(e,
+	 * newerRun); Profiling.numberOfMatches++; // Profiling.totalRunLifeTime +=
+	 * // (System.nanoTime() - // r.getLifeTimeBegin());
+	 * this.toDeleteRuns.add(newerRun); } else { this.activeRuns.add(newerRun);
+	 * } } } } } else { this.toDeleteRuns.add(r); }
+	 * 
+	 * }
+	 * 
+	 * } // else{///It could be Kleene clouse state so check if the type of the
+	 * // state is kleene clouse /// if so then send the event to the next one
+	 * if the counter of the // kleene state is >=1 //// check-proceed
+	 * 
+	 * // checkKleeneProceed( r, e); // } }
+	 */
 	/**
 	 * TO Evaluate Run for incoming Graphs with skip-till-any match Strategy
 	 * 
@@ -633,8 +564,8 @@ public class EngineNormal implements Runnable {
 
 			//// if check result is false the check if the event belongs to the
 			//// same stream or not
-           int result=processEvent(e, r);
-			if (result== 1) { // the predicate if ok.
+			int result = processEvent(e, r);
+			if (result == 1) { // the predicate if ok.
 				// checkResult = this.checkTimeWindow(e, r); // the time window
 				// is ok
 				// if(checkResult){// predicate and time window are ok
@@ -660,20 +591,20 @@ public class EngineNormal implements Runnable {
 					//
 					if (r.isFull()) {
 						// check match and output match
-						//if (r.checkMatch()) {
-							/// close the executor service
-							// shutDownService(newRun);
-							// this.outputMatch(new Match(newRun, this.nfa,
-							/// this.rdfbuffer));
-							// this._dictImpl.refresh();
+						// if (r.checkMatch()) {
+						/// close the executor service
+						// shutDownService(newRun);
+						// this.outputMatch(new Match(newRun, this.nfa,
+						/// this.rdfbuffer));
+						// this._dictImpl.refresh();
 
-							this.outputMatches(e, r);
-							Profiling.numberOfMatches++;
-							// Profiling.totalRunLifeTime += (System.nanoTime()
-							// - r.getLifeTimeBegin());
-							// r.addGraphEvent(e);
-							this.toDeleteRuns.add(r);
-						//}
+						this.outputMatches(e, r);
+						Profiling.numberOfMatches++;
+						// Profiling.totalRunLifeTime += (System.nanoTime()
+						// - r.getLifeTimeBegin());
+						// r.addGraphEvent(e);
+						this.toDeleteRuns.add(r);
+						// }
 					} else {
 
 						// put the run in the active run list, instead of going
@@ -706,21 +637,20 @@ public class EngineNormal implements Runnable {
 					}
 				}
 
-			} else if (result==0){
-				
-				///over here check if its the AND state or NOT
+			} else if (result == 0) {
+
+				/// over here check if its the AND state or NOT
 				State s = this.nfa.getStates(r.getCurrentState());
-				
-				 if (!s.isManager()){
-					
+
+				if (!s.isManager()) {
+
 					if (!this.diffEventorNot) {
 						this.toDeleteRuns.add(r);
 					}
-				}else{
+				} else {
 					this.toDeleteRuns.add(r);
 				}
-				
-				
+
 			}
 			// }//else{///It could be Kleene clouse state so check if the type
 			// of the state is kleene clouse
@@ -790,19 +720,19 @@ public class EngineNormal implements Runnable {
 					//
 					if (r.isFull()) {
 						// check match and output match
-					//	if (r.checkMatch()) {
-							/// close the executor service
-							// shutDownService(newRun);
-							// this.outputMatch(new Match(newRun, this.nfa,
-							/// this.rdfbuffer));
-							// this._dictImpl.refresh();
-							// TODO add this for output
-							 this.outputMatches(e, r);
-							Profiling.numberOfMatches++;
-							// Profiling.totalRunLifeTime += (System.nanoTime()
-							// - r.getLifeTimeBegin());
-							this.toDeleteRuns.add(r);
-					//	}
+						// if (r.checkMatch()) {
+						/// close the executor service
+						// shutDownService(newRun);
+						// this.outputMatch(new Match(newRun, this.nfa,
+						/// this.rdfbuffer));
+						// this._dictImpl.refresh();
+						// TODO add this for output
+						this.outputMatches(e, r);
+						Profiling.numberOfMatches++;
+						// Profiling.totalRunLifeTime += (System.nanoTime()
+						// - r.getLifeTimeBegin());
+						this.toDeleteRuns.add(r);
+						// }
 					} else {
 
 						// put the run in the active run list, instead of going
@@ -810,7 +740,7 @@ public class EngineNormal implements Runnable {
 						// check proceed
 						// if(this.checkProceed(newRun,e)){ ///change this
 						// Addition for RDf Matching
-						if (r.checkStateType(e)) { //TODO: WHY?
+						if (r.checkStateType(e)) { // TODO: WHY?
 							RunOptimised newerRun = this.cloneRun(r);
 							// this.activeRuns.add(r);
 							newerRun.proceed(); /// Addition for the RDF
@@ -837,13 +767,13 @@ public class EngineNormal implements Runnable {
 
 				// }
 
-			} else if (result <=0){
+			} else if (result <= 0) {
 
 				/// check for AND state, if the current state is a manager and
 				/// is partially matched ==true then don't delete it
-				
-					this.toDeleteRuns.add(r);
-			
+
+				this.toDeleteRuns.add(r);
+
 			}
 
 			// }
@@ -873,67 +803,69 @@ public class EngineNormal implements Runnable {
 																	/// begining
 																	/// of the
 																	/// pattern
-		//counter++;
+		// counter++;
 
 		// send the count of the run and the state id as 1, then
 		/// if the event is accepted then take it and use it
 
 		/**
-		 * Two different Cases //TODO: Case 1: if the first state is not the negation, Case 2: if the first state is the Negation one
-		 * Case 1: Simple use the already implemented method.
-		 * Case 2: Extension of the general case, where check the next state unless all the matched.
+		 * Two different Cases //TODO: Case 1: if the first state is not the
+		 * negation, Case 2: if the first state is the Negation one Case 1:
+		 * Simple use the already implemented method. Case 2: Extension of the
+		 * general case, where check the next state unless all the matched.
 		 * 
 		 */
-		
+
 		State firstState = this.nfa.getStates()[0];
-		
-		if(!firstState.isNegation()){
-			
-			
-			
-			startTheNon_Negation_Run(e,firstState);
-			
+
+		if (!firstState.isNegation()) {
+
+			startTheNon_Negation_Run(e, firstState);
+
 			return;
 		}
-		
-		
-		
+
 		// Case 2 Implementation ///
-		
-		///First check if the state and event has the same IRI
 
- int re= firstState.negationStateProcess(e,this._statefullcache, _kbstatefullcache,
-			++this.runCounter);
-  
-  switch(re){
-  
-  case 1:
-	  
-	  break;
-  case 0:
-	  
-	  ///delete the stuff from the cache and carry on
-	  removeFromCacheForFirstState(0,this.runCounter);
-	  break;
-  case 2:
-	  
-	  if( this.nfa.getStates().length>=2)
-	  startTheSecondState_for_Negation(e, this.nfa.getStates()[1]);
-	  
-	  break;
-  
-  }
-  
-  
-	
-	
+		/// First check if the state and event has the same IRI
+
+		int re = firstState.negationStateProcess(e, this._statefullcache, _kbstatefullcache, ++this.runCounter);
+
+		switch (re) {
+
+		case 1:
+
+			break;
+		case 0:
+
+			/// delete the stuff from the cache and carry on
+			removeFromCacheForFirstState(0, this.runCounter);
+			break;
+		case 2:
+
+			if (this.nfa.getStates().length >= 2)
+				startTheSecondState_for_Negation(e, this.nfa.getStates()[1]);
+
+			break;
+
+		}
+
 	}
-	
-	
-	private void startTheSecondState_for_Negation(GraphEvent e, State secondState) throws Exception{
-		if (secondState.canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache,
-				++this.runCounter)) { // Comment: Check if the incoming event
-										// type can start the engine or not?
+
+	private void startTheSecondState_for_Negation(GraphEvent e, State secondState) throws Exception {
+		if (secondState.canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache, ++this.runCounter)) { // Comment:
+																													// Check
+																													// if
+																													// the
+																													// incoming
+																													// event
+																													// type
+																													// can
+																													// start
+																													// the
+																													// engine
+																													// or
+																													// not?
 			// this.rdfbuffer.bufferRDFEvent(e); //If yes then add the event to
 			// the buffer
 			RunOptimised newRun = this.engineRunController.getRun();
@@ -961,18 +893,27 @@ public class EngineNormal implements Runnable {
 			// this one Revome stuff from the map
 			// this._statefullcache.remove(new RunStateMap(this.runCounter,0));
 			// this.runCounter--;
-			
-			removeFromCacheForFirstState(1,this.runCounter);
-			//removeFromCache(this.runCounter);
+
+			removeFromCacheForFirstState(1, this.runCounter);
+			// removeFromCache(this.runCounter);
 		}
 	}
-	
-	
-	private void startTheNon_Negation_Run(GraphEvent e, State firstState) throws Exception{
 
-		if (firstState.canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache,
-				++this.runCounter)) { // Comment: Check if the incoming event
-										// type can start the engine or not?
+	private void startTheNon_Negation_Run(GraphEvent e, State firstState) throws Exception {
+
+		if (firstState.canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache, ++this.runCounter)) { // Comment:
+																												// Check
+																												// if
+																												// the
+																												// incoming
+																												// event
+																												// type
+																												// can
+																												// start
+																												// the
+																												// engine
+																												// or
+																												// not?
 			// this.rdfbuffer.bufferRDFEvent(e); //If yes then add the event to
 			// the buffer
 			RunOptimised newRun = this.engineRunController.getRun();
@@ -998,12 +939,11 @@ public class EngineNormal implements Runnable {
 			// this one Revome stuff from the map
 			// this._statefullcache.remove(new RunStateMap(this.runCounter,0));
 			// this.runCounter--;
-			
-			
-			removeFromCacheForFirstState(0,this.runCounter);
-		//	removeFromCache(this.runCounter);
+
+			removeFromCacheForFirstState(0, this.runCounter);
+			// removeFromCache(this.runCounter);
 		}
-	
+
 	}
 
 	/**
@@ -1097,30 +1037,25 @@ public class EngineNormal implements Runnable {
 	 * @return the check result
 	 */
 
-	public boolean checkRDFPredicate(GraphEvent e, RunOptimised r) throws Exception { 
-	
+	public boolean checkRDFPredicate(GraphEvent e, RunOptimised r) throws Exception {
+
 		State s = this.nfa.getStates(r.getCurrentState());
 
-		
-		//boolean checker = false;
+		// boolean checker = false;
 		this.diffEventorNot = false;
-		
-		
-		
-		if(!s.evetType.contains(e.getMappedContext())){ ///check if the new event has the same tyoe of the current state
+
+		if (!s.evetType.contains(e.getMappedContext())) { /// check if the new
+															/// event has the
+															/// same tyoe of the
+															/// current state
 			this.diffEventorNot = true;
 			return false;
 		}
-		
-		
-		
 
-
-//		if (!checker) {
-//			this.diffEventorNot = true;
-//			return false;
-//		}
-
+		// if (!checker) {
+		// this.diffEventorNot = true;
+		// return false;
+		// }
 
 		if (!s.isKleeneClosure()) {
 			Edge beginEdge = s.getEdges(0);
@@ -1142,21 +1077,21 @@ public class EngineNormal implements Runnable {
 		} else {
 			if (r.isKleeneClosureInitialized()) {
 				Edge takeEdge = s.getEdges(1);
-				//boolean result;
-				//result = takeEdge.evaluateGraphEvent(e, r, s, this._statefullcache, _kbstatefullcache);
+				// boolean result;
+				// result = takeEdge.evaluateGraphEvent(e, r, s,
+				// this._statefullcache, _kbstatefullcache);
 
-				
 				if (takeEdge.evaluateGraphEvent(e, r, s, this._statefullcache, _kbstatefullcache)) {
-					
+
 					return true;
 				}
-				
-				
+
 			} else {
 				Edge beginEdge = s.getEdges(0);
-			//	boolean result;
+				// boolean result;
 
-			//	result = beginEdge.evaluateGraphEvent(e, r, s, this._statefullcache, _kbstatefullcache);//
+				// result = beginEdge.evaluateGraphEvent(e, r, s,
+				// this._statefullcache, _kbstatefullcache);//
 				// this.refreshStateBindings();
 				if (beginEdge.evaluateGraphEvent(e, r, s, this._statefullcache, _kbstatefullcache)) {
 					// evalCache(s, r);
@@ -1168,8 +1103,6 @@ public class EngineNormal implements Runnable {
 		return false;
 
 	}
-
-
 
 	/**
 	 * 
@@ -1196,7 +1129,6 @@ public class EngineNormal implements Runnable {
 		if (!s.isNegation() && !s.isOptional() && !s.isManager()) { /// Simple
 																	/// State or
 																	/// Kleene-+
-				
 
 			/// simple check the predicate
 			if (checkRDFPredicate(e, r)) {
@@ -1225,22 +1157,37 @@ public class EngineNormal implements Runnable {
 			boolean negation = checkRDFPredicate(e, r);
 
 			if (negation == true) {
-				return 0;  ///delete the run
-			} else { ///match it with the next state, considering that the next state is not a negation state
-				r.setCurrentState(r.getCurrentState() + 1);  //TODO: over here also check the optional state stuff as well
+				return 0; /// delete the run
+			} else { /// match it with the next state, considering that the next
+						/// state is not a negation state
+				r.setCurrentState(r.getCurrentState() + 1); // TODO: over here
+															// also check the
+															// optional state
+															// stuff as well
 				boolean nextToNegation = checkRDFPredicate(e, r);
-				
-				                                       //check for the optional state next to a negation state
-				if(this.nfa.getStates(r.getCurrentState()).isOptional() ){
+
+				// check for the optional state next to a negation state
+				if (this.nfa.getStates(r.getCurrentState()).isOptional()) {
 					return 1;
 				}
-				
-				
+
 				if (nextToNegation == true) {
-					return 1;  ///deal it in a normal way, if the next state is the kleene+ then create a new run and vice versa
+					return 1; /// deal it in a normal way, if the next state is
+								/// the kleene+ then create a new run and vice
+								/// versa
 				} else {
-					r.setCurrentState(r.getCurrentState() - 1); /// if the next state is not matched then stay on the current negation state, and use the normal
-					                                            //method to deal with the stuff
+					r.setCurrentState(r.getCurrentState() - 1); /// if the next
+																/// state is not
+																/// matched then
+																/// stay on the
+																/// current
+																/// negation
+																/// state, and
+																/// use the
+																/// normal
+																// method to
+																/// deal with
+																/// the stuff
 					return 1;
 				}
 
@@ -1254,17 +1201,17 @@ public class EngineNormal implements Runnable {
 																		/// final
 																		/// state
 			boolean negation = checkRDFPredicate(e, r);
-			if (negation == true) {  ///if the last state which is a negation matched then simply return 0 to delete the run
-				return 0; ///delete the run
+			if (negation == true) { /// if the last state which is a negation
+									/// matched then simply return 0 to delete
+									/// the run
+				return 0; /// delete the run
 			} else {
-				return 1; ///else return 1 and complete the run with a match
+				return 1; /// else return 1 and complete the run with a match
 			}
-			
-			
-			
-			
-		} else if (s.isOptional() && !s.isNegation() &&!s.isManager()) {//// Optional state
-			
+
+		} else if (s.isOptional() && !s.isNegation() && !s.isManager()) {//// Optional
+																			//// state
+
 			checkRDFPredicate(e, r); /// match it even if its not matched just
 										/// send the true
 
@@ -1287,31 +1234,29 @@ public class EngineNormal implements Runnable {
 	 * @param e
 	 * @param r
 	 * @param s
-	 * @return 0: dead, -5: dead for IF, and ok for FB, true, 0 false and the run must be deleted
+	 * @return 0: dead, -5: dead for IF, and ok for FB, true, 0 false and the
+	 *         run must be deleted
 	 * @throws Exception
 	 */
 	private int evaluateAND(GraphEvent e, RunOptimised r, State s) throws Exception {
 
-		///Integrate the Manager State's hashmap for the timestamps
-		
-		
+		/// Integrate the Manager State's hashmap for the timestamps
+
 		if (!s.getSubstates().containsKey(e.getMappedContext()) && !s.get_timestampRuns().containsKey(r.getId())) {
 			return -5;
-		}else if(!s.getSubstates().containsKey(e.getMappedContext()) ){
+		} else if (!s.getSubstates().containsKey(e.getMappedContext())) {
 			return 0;
-		}else{ 
-			
-		if(s.get_timestampRuns().containsKey(r.getId())){
-			long startTime= s.get_timestampRuns().get(r.getId());
-			
-			if(startTime!=e.getTimeStamp()){
-				return 0;  ///Why -1 over here should be 0
+		} else {
+
+			if (s.get_timestampRuns().containsKey(r.getId())) {
+				long startTime = s.get_timestampRuns().get(r.getId());
+
+				if (startTime != e.getTimeStamp()) {
+					return 0; /// Why -1 over here should be 0
+				}
+
 			}
-			
-		}
-			
-			
-			
+
 			Collection<State> substates = s.getSubstates().get(e.getMappedContext());
 			/// iterate over the states and match the event with it, if its
 			/// matches then return true, else return false
@@ -1321,33 +1266,33 @@ public class EngineNormal implements Runnable {
 
 				// System.out.println("GPM ID: "+ st.getNfaData().getOrder());
 				// System.out.println("State IDM "+ st.getOrder());
-              
-				
+
 				// if not yet matched
-				if (!st.getStateStatus().contains(r.getId())) { ///There is an edge case over here
+				if (!st.getStateStatus().contains(r.getId())) { /// There is an
+																/// edge case
+																/// over here
 					Edge beginEdge = st.getEdges(0);
 
 					if (beginEdge.evaluateGraphEvent(e, r, st, this._statefullcache, this._kbstatefullcache)) {
 
 						/// First set computed to true, and copy the timestmap
-						//st.setComputed(true); ////Issues when mulitple runs share this.
-                        st.getStateStatus().add(r.getId());
-						//st.setTiptopTime(e.getTimeStamp());
-						//s.setTiptopTime(e.getTimeStamp());
+						// st.setComputed(true); ////Issues when mulitple runs
+						/// share this.
+						st.getStateStatus().add(r.getId());
+						// st.setTiptopTime(e.getTimeStamp());
+						// s.setTiptopTime(e.getTimeStamp());
 						s.get_timestampRuns().put(r.getId(), e.getTimeStamp());
-						
+
 						/// Stuff for the AND operation
 
 						/// if all the states are matches
 						Collection<State> checkstate = s.getSubstates().values();
-				
-						
-						///if each substate contains the run id
-					//	substates.stream().filter(x->x.getStateStatus().contains(r.getId())).count() 
-						
-						
-						
-						if (substates.stream().filter(x->x.getStateStatus().contains(r.getId())).count() == checkstate.size()) {
+
+						/// if each substate contains the run id
+						// substates.stream().filter(x->x.getStateStatus().contains(r.getId())).count()
+
+						if (substates.stream().filter(x -> x.getStateStatus().contains(r.getId())).count() == checkstate
+								.size()) {
 							// check of stateful condition between sub-states of
 							// the AND :: to be done on the next step
 
@@ -1402,41 +1347,39 @@ public class EngineNormal implements Runnable {
 
 	}
 
-	/*private boolean checkNegationState(GraphEvent e, RunOptimised r) throws Exception {
-
-		State s = this.nfa.getStates(r.getCurrentState());
-
-		/// State newS=this.nfa.getStates(r.getCurrentState()+1);
-		// TO check for the negation state, First check the event for the next
-		/// state and for the previous state and if the events
-		/// satisfies previous or next state predicate then dont consume that
-		/// event, otherwise comsume it.
-
-		// Still have to implement the negation at the first and the last state
-		/// One of the most expensive operation of pattern matching...
-
-		/// if its after negation then only create one run and thats it.....
-
-		if (!s.isNegation()) {
-			return true;
-		} else {
-
-			if (s.isNegation() && !s.isEnding() && this.nfa.getStates(r.getCurrentState() + 1).canStartWithGraphEvent(e,
-					this._statefullcache, _kbstatefullcache, r.getId())) {// canStartWithRDFEvent(e)){
-
-				return false;
-
-			} else if (s.isNegation() && this.nfa.getStates(r.getCurrentState() - 1).canStartWithGraphEvent(e,
-					this._statefullcache, _kbstatefullcache, this.runCounter++)) {
-				return false;
-			} /// Add the deltion of stuff from here....
-		}
-		/// check the event on the negation state as well...like if its equal or
-		/// not
-
-		return true;
-	}
-*/
+	/*
+	 * private boolean checkNegationState(GraphEvent e, RunOptimised r) throws
+	 * Exception {
+	 * 
+	 * State s = this.nfa.getStates(r.getCurrentState());
+	 * 
+	 * /// State newS=this.nfa.getStates(r.getCurrentState()+1); // TO check for
+	 * the negation state, First check the event for the next /// state and for
+	 * the previous state and if the events /// satisfies previous or next state
+	 * predicate then dont consume that /// event, otherwise comsume it.
+	 * 
+	 * // Still have to implement the negation at the first and the last state
+	 * /// One of the most expensive operation of pattern matching...
+	 * 
+	 * /// if its after negation then only create one run and thats it.....
+	 * 
+	 * if (!s.isNegation()) { return true; } else {
+	 * 
+	 * if (s.isNegation() && !s.isEnding() &&
+	 * this.nfa.getStates(r.getCurrentState() + 1).canStartWithGraphEvent(e,
+	 * this._statefullcache, _kbstatefullcache, r.getId())) {//
+	 * canStartWithRDFEvent(e)){
+	 * 
+	 * return false;
+	 * 
+	 * } else if (s.isNegation() && this.nfa.getStates(r.getCurrentState() -
+	 * 1).canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache,
+	 * this.runCounter++)) { return false; } /// Add the deltion of stuff from
+	 * here.... } /// check the event on the negation state as well...like if
+	 * its equal or /// not
+	 * 
+	 * return true; }
+	 */
 	private void outputMatches(GraphEvent e, RunOptimised r) {
 		if (this.constFunc != null) {
 			this.constFunc.constrcutGraph(_statefullcache, r, _dictImpl);
@@ -1459,158 +1402,156 @@ public class EngineNormal implements Runnable {
 			// "+i+"############################");
 			// TODO remove all the states properly, and get the data from all
 			// the states
-			
-			State workingState= nfa.getStates()[i];
-			
 
-			if(workingState.isManager() ){
-				
-				for(State st:workingState.getSubstates().values()){
-					
-					if(st.getStateStatus().contains(r.getId()))
-					{	
-					
-					for(int j=0;j< st.getNfaData().getAutomta().getStates().size();j++){
-						
-						this.outputManagerState(st,st.getNfaData().getAutomta().getStates().get(j).getRule(), r, j, output, ct, e.getTimeStamp());
-					}
-					
-				    }
-				
-					
-				}
-				
-				
-				//return;
-			} else {
-			
-			
-			for (int j = 0; j < workingState.getNfaData().getAutomta().getStates().size(); j++) {
-				output = "";
-				
-				/**
-				 * Check if its the manager or not. In case of manager state get the NFAauotmat from the Substates
-				 * 
-				 */
-				
-				
-				
-				
-				
-				Rule outRule = workingState.getNfaData().getAutomta().getStates().get(j).getRule();
+			State workingState = nfa.getStates()[i];
 
-				if (outRule.isSelect()) {
+			if (workingState.isManager()) {
 
-					MultiBidirectionalIndex result = this._statefullcache.get(new RunStateMap(workingState.getOrder(), r.getId(), j));
-					
-					if(workingState.isNegation() || workingState.isOptional() && result ==null ){
-						continue;
-					}
-					
+				for (State st : workingState.getSubstates().values()) {
 
-					for (long key : result.getrIndex().keySet()) {
+					if (st.getStateStatus().contains(r.getId())) {
 
-						Set<SP> sp = result.getrIndex().get(key);
+						for (int j = 0; j < st.getNfaData().getAutomta().getStates().size(); j++) {
 
-						for (SP out : sp) {
-
-							// its either subject or object
-							if (outRule.isSelectSub()) {
-								Resource res = _dictImpl.getResourceAdaptive(out.getSub());
-								if (res == null) {
-									output = "?" + outRule.getSubject().getProjection() + " "
-											+ _dictImpl.getBnodeAdaptive(out.getSub()) + " ";
-								} else {
-									output = "?" + outRule.getSubject().getProjection() + " " + res + " ";
-								}
-							}
-
-							if (outRule.isSelectObj()) {
-								Literal lg = _dictImpl.getLiteralAdaptive(out.getPred());
-								if (lg != null) {
-
-									output = output + "?" + outRule.getObject().getProjection() + " "
-											+ lg.getValue().toString() + "\n";
-								} else {
-									Resource res = _dictImpl.getResourceAdaptive(out.getPred());
-									if (res == null) {
-										output = output + "?" + outRule.getObject().getProjection() + " "
-												+ _dictImpl.getBnodeAdaptive(out.getPred()) + "\n";
-									} else {
-										output = output + "?" + outRule.getObject().getProjection() + " " + res + " \n";
-									}
-								}
-							}
-
+							this.outputManagerState(st, st.getNfaData().getAutomta().getStates().get(j).getRule(), r, j,
+									output, ct, e.getTimeStamp());
 						}
 
 					}
-					if (ct == 0) {
-						ct = 1;
-						output = output + "  [" + e.getTimeStamp() + "," + r.getLifeTimeBegin() + "]  ";
-					}
-
-					this.resultqueue.add(output);
 
 				}
 
-				/**
-				 * Add the KB mappings found and use it for the output
-				 */
+				// return;
+			} else {
 
-				// first check if the state contains the KB graph or not
+				for (int j = 0; j < workingState.getNfaData().getAutomta().getStates().size(); j++) {
+					output = "";
 
-				if (workingState.getNfaData().getAutomta().getContainsKB() == 1) {
+					/**
+					 * Check if its the manager or not. In case of manager state
+					 * get the NFAauotmat from the Substates
+					 * 
+					 */
 
-					/// loop though the kbcache and get the required mappings
-					/// from it
-					/// get the kblist which has the isSelect option set to true
+					Rule outRule = workingState.getNfaData().getAutomta().getStates().get(j).getRule();
 
-					List<KBRule> krules = workingState.getNfaData().getAutomta().get_kbRuleList2().stream()
-							.filter(x -> x.isSelect()).collect(Collectors.toList());
+					if (outRule.isSelect()) {
 
-					if (!krules.isEmpty()) {
-						MultiBiMap<Long, SP> kbresult = this._kbstatefullcache.get(new KBindex(r.getId(), workingState.getOrder()));
+						MultiBidirectionalIndex result = this._statefullcache
+								.get(new RunStateMap(workingState.getOrder(), r.getId(), j));
 
-						for (KBRule out : krules) {
-							for (Map.Entry<Long, SP> entry : kbresult.entries()) {
+						if (workingState.isNegation() || workingState.isOptional() && result == null) {
+							continue;
+						}
 
-								if (out.isSelectSub() && entry.getKey() == out.getPredicate().getMappedValue()) {
-									Resource res = _dictImpl.getResourcePersistant(entry.getValue().getSub());
+						for (long key : result.getrIndex().keySet()) {
+
+							Set<SP> sp = result.getrIndex().get(key);
+
+							for (SP out : sp) {
+
+								// its either subject or object
+								if (outRule.isSelectSub()) {
+									Resource res = _dictImpl.getResourceAdaptive(out.getSub());
 									if (res == null) {
-										output = "?" + out.getSubject().getProjection() + " "
-												+ _dictImpl.getBnodePersistant(entry.getValue().getSub()) + " ";
+										output = "?" + outRule.getSubject().getProjection() + " "
+												+ _dictImpl.getBnodeAdaptive(out.getSub()) + " ";
 									} else {
-										output = "?" + out.getSubject().getProjection() + " " + res + " ";
+										output = "?" + outRule.getSubject().getProjection() + " " + res + " ";
 									}
 								}
-								if (out.isSelectObj() && entry.getKey() == out.getPredicate().getMappedValue()) {
-									Literal lg = _dictImpl.getLiteralPersistant(entry.getValue().getPred());
+
+								if (outRule.isSelectObj()) {
+									Literal lg = _dictImpl.getLiteralAdaptive(out.getPred());
 									if (lg != null) {
 
-										output = output + "?" + out.getObject().getProjection() + " "
+										output = output + "?" + outRule.getObject().getProjection() + " "
 												+ lg.getValue().toString() + "\n";
 									} else {
-										Resource res = _dictImpl.getResourcePersistant(entry.getValue().getPred());
+										Resource res = _dictImpl.getResourceAdaptive(out.getPred());
 										if (res == null) {
 											output = output + "?" + outRule.getObject().getProjection() + " "
-													+ _dictImpl.getBnodePersistant(entry.getValue().getPred()) + "\n";
+													+ _dictImpl.getBnodeAdaptive(out.getPred()) + "\n";
 										} else {
 											output = output + "?" + outRule.getObject().getProjection() + " " + res
 													+ " \n";
 										}
 									}
 								}
+
 							}
-							this.resultqueue.add(output);
+
+						}
+						if (ct == 0) {
+							ct = 1;
+							output = output + "  [" + e.getTimeStamp() + "," + r.getLifeTimeBegin() + "]  ";
+						}
+
+						this.resultqueue.add(output);
+
+					}
+
+					/**
+					 * Add the KB mappings found and use it for the output
+					 */
+
+					// first check if the state contains the KB graph or not
+
+					if (workingState.getNfaData().getAutomta().getContainsKB() == 1) {
+
+						/// loop though the kbcache and get the required
+						/// mappings
+						/// from it
+						/// get the kblist which has the isSelect option set to
+						/// true
+
+						List<KBRule> krules = workingState.getNfaData().getAutomta().get_kbRuleList2().stream()
+								.filter(x -> x.isSelect()).collect(Collectors.toList());
+
+						if (!krules.isEmpty()) {
+							MultiBiMap<Long, SP> kbresult = this._kbstatefullcache
+									.get(new KBindex(r.getId(), workingState.getOrder()));
+
+							for (KBRule out : krules) {
+								for (Map.Entry<Long, SP> entry : kbresult.entries()) {
+
+									if (out.isSelectSub() && entry.getKey() == out.getPredicate().getMappedValue()) {
+										Resource res = _dictImpl.getResourcePersistant(entry.getValue().getSub());
+										if (res == null) {
+											output = "?" + out.getSubject().getProjection() + " "
+													+ _dictImpl.getBnodePersistant(entry.getValue().getSub()) + " ";
+										} else {
+											output = "?" + out.getSubject().getProjection() + " " + res + " ";
+										}
+									}
+									if (out.isSelectObj() && entry.getKey() == out.getPredicate().getMappedValue()) {
+										Literal lg = _dictImpl.getLiteralPersistant(entry.getValue().getPred());
+										if (lg != null) {
+
+											output = output + "?" + out.getObject().getProjection() + " "
+													+ lg.getValue().toString() + "\n";
+										} else {
+											Resource res = _dictImpl.getResourcePersistant(entry.getValue().getPred());
+											if (res == null) {
+												output = output + "?" + outRule.getObject().getProjection() + " "
+														+ _dictImpl.getBnodePersistant(entry.getValue().getPred())
+														+ "\n";
+											} else {
+												output = output + "?" + outRule.getObject().getProjection() + " " + res
+														+ " \n";
+											}
+										}
+									}
+								}
+								this.resultqueue.add(output);
+							}
+
 						}
 
 					}
 
 				}
-
 			}
-		}
 
 			// System.out.println("########################################");
 
@@ -1631,7 +1572,7 @@ public class EngineNormal implements Runnable {
 		ArrayList<RunOptimised> partitionedRuns = null;
 		for (int i = 0; i < size; i++) {
 			tempRun = toDeleteRuns.get(0);
-		
+
 			tempRun.resetRun();
 
 			removeFromCache(tempRun.getId());
@@ -1653,7 +1594,7 @@ public class EngineNormal implements Runnable {
 		for (int i = 0; i < this.nfa.getStates().length; i++) {
 
 			State rmoveState = nfa.getStates()[i];
-			
+
 			if (!rmoveState.isManager()) {
 
 				for (int j = 0; j < rmoveState.getNfaData().getAutomta().getStates().size(); j++) {
@@ -1664,23 +1605,16 @@ public class EngineNormal implements Runnable {
 
 					this._kbstatefullcache.remove(new KBindex(rID, rmoveState.getOrder()));
 				}
-			}else {
-				
-				
-				//get the substates
-				
-				for(State s:rmoveState.getSubstates().values()){
-					
-					
-					
-					
-					///remove the hashmap stuff from here
-					if(s.getStateStatus().contains(rID)){
-						
-						
-						
-						
-						for (int j = 0; j <s.getNfaData().getAutomta().getStates().size(); j++) {
+			} else {
+
+				// get the substates
+
+				for (State s : rmoveState.getSubstates().values()) {
+
+					/// remove the hashmap stuff from here
+					if (s.getStateStatus().contains(rID)) {
+
+						for (int j = 0; j < s.getNfaData().getAutomta().getStates().size(); j++) {
 							this._statefullcache.remove(new RunStateMap(s.getOrder(), rID, j));
 						}
 
@@ -1688,30 +1622,27 @@ public class EngineNormal implements Runnable {
 
 							this._kbstatefullcache.remove(new KBindex(rID, s.getOrder()));
 						}
-						
-						
-			     	  rmoveState.get_timestampRuns().remove(rID);
-						
+
+						rmoveState.get_timestampRuns().remove(rID);
+
 						s.getStateStatus().remove(rID);
-						
-						//System.out.println();
+
+						// System.out.println();
 					}
 				}
-				
+
 			}
-			
-			////If its a Manager then go through the substates and first delete the stuff from the hashmap of manager state
+
+			//// If its a Manager then go through the substates and first delete
+			//// the stuff from the hashmap of manager state
 
 		}
 
 	}
 
-	
-	
-	
-	private void removeFromCacheForFirstState(int id, int rID){
+	private void removeFromCacheForFirstState(int id, int rID) {
 		State rmoveState = nfa.getStates()[id];
-		
+
 		if (!rmoveState.isManager()) {
 
 			for (int j = 0; j < rmoveState.getNfaData().getAutomta().getStates().size(); j++) {
@@ -1722,18 +1653,14 @@ public class EngineNormal implements Runnable {
 
 				this._kbstatefullcache.remove(new KBindex(rID, rmoveState.getOrder()));
 			}
-		}else {
-			
-			
-			//get the substates
-			
-			for(State s:rmoveState.getSubstates().values()){
-				if(s.getStateStatus().contains(rID)){
-					
-					
-					
-					
-					for (int j = 0; j <s.getNfaData().getAutomta().getStates().size(); j++) {
+		} else {
+
+			// get the substates
+
+			for (State s : rmoveState.getSubstates().values()) {
+				if (s.getStateStatus().contains(rID)) {
+
+					for (int j = 0; j < s.getNfaData().getAutomta().getStates().size(); j++) {
 						this._statefullcache.remove(new RunStateMap(s.getOrder(), rID, j));
 					}
 
@@ -1741,16 +1668,16 @@ public class EngineNormal implements Runnable {
 
 						this._kbstatefullcache.remove(new KBindex(rID, s.getOrder()));
 					}
-					
-					
-		     	  rmoveState.get_timestampRuns().remove(rID);
-					
-		     	 s.getStateStatus().remove(rID);
+
+					rmoveState.get_timestampRuns().remove(rID);
+
+					s.getStateStatus().remove(rID);
 				}
 			}
-			
+
 		}
 	}
+
 	public NxParser getInputS() {
 		return inputS;
 	}
@@ -1783,9 +1710,9 @@ public class EngineNormal implements Runnable {
 		this.nfa = nfa;
 	}
 
-//	public void setGraphSize(int s) {
-//		this.graphsize = s;
-//	}
+	// public void setGraphSize(int s) {
+	// this.graphsize = s;
+	// }
 
 	private void configPartitionBy() {
 
@@ -1909,9 +1836,8 @@ public class EngineNormal implements Runnable {
 		System.out.println("Query Processing Completed");
 	}
 
-	
-	
-	private void outputManagerState(State s,Rule outRule, RunOptimised r,  int j, String output, int ct, long timestmap){
+	private void outputManagerState(State s, Rule outRule, RunOptimised r, int j, String output, int ct,
+			long timestmap) {
 		if (outRule.isSelect()) {
 
 			MultiBidirectionalIndex result = this._statefullcache.get(new RunStateMap(s.getOrder(), r.getId(), j));
@@ -1937,8 +1863,8 @@ public class EngineNormal implements Runnable {
 						Literal lg = _dictImpl.getLiteralAdaptive(out.getPred());
 						if (lg != null) {
 
-							output = output + "?" + outRule.getObject().getProjection() + " "
-									+ lg.getValue().toString() + "\n";
+							output = output + "?" + outRule.getObject().getProjection() + " " + lg.getValue().toString()
+									+ "\n";
 						} else {
 							Resource res = _dictImpl.getResourceAdaptive(out.getPred());
 							if (res == null) {
@@ -1974,8 +1900,8 @@ public class EngineNormal implements Runnable {
 			/// from it
 			/// get the kblist which has the isSelect option set to true
 
-			List<KBRule> krules = s.getNfaData().getAutomta().get_kbRuleList2().stream()
-					.filter(x -> x.isSelect()).collect(Collectors.toList());
+			List<KBRule> krules = s.getNfaData().getAutomta().get_kbRuleList2().stream().filter(x -> x.isSelect())
+					.collect(Collectors.toList());
 
 			if (!krules.isEmpty()) {
 				MultiBiMap<Long, SP> kbresult = this._kbstatefullcache.get(new KBindex(r.getId(), s.getOrder()));
@@ -1996,16 +1922,15 @@ public class EngineNormal implements Runnable {
 							Literal lg = _dictImpl.getLiteralPersistant(entry.getValue().getPred());
 							if (lg != null) {
 
-								output = output + "?" + out.getObject().getProjection() + " "
-										+ lg.getValue().toString() + "\n";
+								output = output + "?" + out.getObject().getProjection() + " " + lg.getValue().toString()
+										+ "\n";
 							} else {
 								Resource res = _dictImpl.getResourcePersistant(entry.getValue().getPred());
 								if (res == null) {
 									output = output + "?" + outRule.getObject().getProjection() + " "
 											+ _dictImpl.getBnodePersistant(entry.getValue().getPred()) + "\n";
 								} else {
-									output = output + "?" + outRule.getObject().getProjection() + " " + res
-											+ " \n";
+									output = output + "?" + outRule.getObject().getProjection() + " " + res + " \n";
 								}
 							}
 						}
@@ -2014,8 +1939,7 @@ public class EngineNormal implements Runnable {
 				}
 
 			}
-	}
+		}
 	}
 
-	
 }

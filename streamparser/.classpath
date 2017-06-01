@@ -27,8 +27,5 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/nxparser"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/spaseqModels"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/spaseqEngine"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
