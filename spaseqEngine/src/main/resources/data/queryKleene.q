@@ -25,7 +25,7 @@ SEQ (A, B+, C)
                   {
                   ?company3 pred:price ?p3.
                   ?company3 pred:volume ?vol3. 
-                  Filter (?p3 = "16"^^<http://www.w3.org/2001/XMLSchema#double> ).
+                  Filter (?p3 = '16.0'^^<http://www.w3.org/2001/XMLSchema#double>).
                    
                   }
            

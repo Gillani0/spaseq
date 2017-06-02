@@ -16,7 +16,7 @@ import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
  */
 public class GraphEvent {
 
-	private int id;
+	private long id;
 	private long timeStamp;
 	// private List<Node[]> knowGraph ;
 	// private List<MappedEvent> mapE;
@@ -50,11 +50,11 @@ public class GraphEvent {
 
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

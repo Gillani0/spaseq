@@ -9,6 +9,7 @@ package edu.telecomstet.cep.query.parser;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -98,8 +99,20 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 	private boolean construct = false;
 
-	public ListenerQueryContextUpdated(DictionaryOpImpl dict)
-			throws ParseException, DatatypeConfigurationException {
+	HashMap<String, Integer> map;
+
+	public ListenerQueryContextUpdated(DictionaryOpImpl dict) throws ParseException, DatatypeConfigurationException {
+
+		map = new HashMap<>(); // 0: int, 1: float, 2: decimal, 3: DataTime, 4:
+								// Double, 5: string, 6: Long
+		map.put("<http://www.w3.org/2001/XMLSchema#dateTime>", 3);
+		map.put("<http://www.w3.org/2001/XMLSchema#integer>", 0);
+		map.put("<http://www.w3.org/2001/XMLSchema#double>", 4);
+		map.put("<http://www.w3.org/2001/XMLSchema#float>", 1);
+		map.put("<http://www.w3.org/2001/XMLSchema#string>", 5);
+		map.put("<http://www.w3.org/2001/XMLSchema#long>", 6);
+		map.put("<http://www.w3.org/2001/XMLSchema#decimal>", 2);
+
 		_streamData = new ArrayList<>();
 		_pattData = new ArrayList<>();
 		_unionpattData = new ArrayList<>();
@@ -119,8 +132,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void enterSelectClause(
-			@NotNull StreamingSparql.SelectClauseContext ctx) {
+	public void enterSelectClause(@NotNull StreamingSparql.SelectClauseContext ctx) {
 
 		// System.out.println(ctx.getText());
 		String select = ctx.getText();
@@ -131,8 +143,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void enterConstructClause(
-			@NotNull StreamingSparql.ConstructClauseContext ctx) {
+	public void enterConstructClause(@NotNull StreamingSparql.ConstructClauseContext ctx) {
 
 		_constRules = new ArrayList<>();
 		construct = true;
@@ -140,8 +151,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void exitConstructClause(
-			@NotNull StreamingSparql.ConstructClauseContext ctx) {
+	public void exitConstructClause(@NotNull StreamingSparql.ConstructClauseContext ctx) {
 
 		// TODO: add the construct rules to the NFA of rules, but which?? NFA,
 		// this.
@@ -150,15 +160,13 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 	@Override
 	public void enterWithin(@NotNull StreamingSparql.WithinContext ctx) {
-		_windData = new WindowTemporalData(Integer.parseInt(ctx.time()
-				.getText()), ctx.unitTime().getText());
+		_windData = new WindowTemporalData(Integer.parseInt(ctx.time().getText()), ctx.unitTime().getText());
 		// System.out.println(ctx.time().getText());
 		// System.out.println(ctx.unitTime().getText());
 	}
 
 	@Override
-	public void enterPartitionbyClause(
-			@NotNull StreamingSparql.PartitionbyClauseContext ctx) {
+	public void enterPartitionbyClause(@NotNull StreamingSparql.PartitionbyClauseContext ctx) {
 		// System.out.println(ctx.pattern().var(0).getText());
 		patternBy = ctx.partition().var(0).getText().replace("?", "");
 		// /remove the the question mark
@@ -168,15 +176,17 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void enterStreamsetCaluse(
-			@NotNull StreamingSparql.StreamsetCaluseContext ctx) { // /TO get
-																	// the
-																	// Streams
-																	// ID,
-																	// URIS's ,
-																	// Time and
-																	// Time
-																	// Units
+	public void enterStreamsetCaluse(@NotNull StreamingSparql.StreamsetCaluseContext ctx) { // /TO
+																							// get
+																							// the
+																							// Streams
+																							// ID,
+																							// URIS's
+																							// ,
+																							// Time
+																							// and
+																							// Time
+																							// Units
 		StreamData streamdata = new StreamData();
 		streamdata.setStreamID(ctx.var3().getText());
 		streamdata.setStreamURI(ctx.iri().getText(), this.dictImplOp);
@@ -192,13 +202,17 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	// TODO: check the pattern name properly
 
 	@Override
-	public void enterEventPattern(
-			@NotNull StreamingSparql.EventPatternContext ctx) { // /to get the
-																// Seqnece of
-																// patterns and
-																// operations on
-																// them
-																// SEQ(A,B!,C)
+	public void enterEventPattern(@NotNull StreamingSparql.EventPatternContext ctx) { // /to
+																						// get
+																						// the
+																						// Seqnece
+																						// of
+																						// patterns
+																						// and
+																						// operations
+																						// on
+																						// them
+																						// SEQ(A,B!,C)
 
 		PatternData pattdata = new PatternData(stateid);
 		PatternData unionpattdata;
@@ -247,11 +261,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void enterEventSelection(
-			@NotNull StreamingSparql.EventSelectionContext ctx) {
+	public void enterEventSelection(@NotNull StreamingSparql.EventSelectionContext ctx) {
 
-		this._pattData.get(_pattData.size() - 1)
-				.setPattSelection(ctx.getText());
+		this._pattData.get(_pattData.size() - 1).setPattSelection(ctx.getText());
 
 	}
 
@@ -272,11 +284,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 			bind = new KBbindings();
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		_bindList = new ArrayList<>();
 		filterList = new ArrayList<>();
@@ -297,8 +307,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 		for (int i = 0; i < this._streamData.size(); i++) {
 
-			if (this._streamData.get(i).getStreamID()
-					.equals(ctx.eventDefinition().multipleVars().getText())) {
+			if (this._streamData.get(i).getStreamID().equals(ctx.eventDefinition().multipleVars().getText())) {
 				// this.nfaData.setEventType(this._streamData.get(i).getStreamURI());
 
 				this.nfaData.getStreamList().add(this._streamData.get(i));
@@ -337,8 +346,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void enterGraphGraphPattern(
-			@NotNull StreamingSparql.GraphGraphPatternContext ctx) {
+	public void enterGraphGraphPattern(@NotNull StreamingSparql.GraphGraphPatternContext ctx) {
 
 		// System.out.println(ctx.getText());
 		this.graph = true;
@@ -348,8 +356,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void exitGraphGraphPattern(
-			@NotNull StreamingSparql.GraphGraphPatternContext ctx) {
+	public void exitGraphGraphPattern(@NotNull StreamingSparql.GraphGraphPatternContext ctx) {
 
 		// System.out.println(ctx.getText());
 		this.graph = false;
@@ -361,10 +368,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	private void kbManipulation(KBbindings kb) {
 		// for(KBbindings kb:this._bindList){
 		// /For s-s join
-		KBbindings dsKb = this._bindList
-				.stream()
-				.filter(x -> x.getSub().getProjection()
-						.equals(kb.getSub().getProjection())
+		KBbindings dsKb = this._bindList.stream()
+				.filter(x -> x.getSub().getProjection().equals(kb.getSub().getProjection())
 						&& x.getStateID() != kb.getStateID())
 				.reduce((p, c) -> c).orElse(null);
 
@@ -375,10 +380,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		} else {
 
 			// /for s-o join
-			KBbindings doKb = this._bindList
-					.stream()
-					.filter(x -> x.getObj().getProjection()
-							.equals(kb.getSub().getProjection())
+			KBbindings doKb = this._bindList.stream()
+					.filter(x -> x.getObj().getProjection().equals(kb.getSub().getProjection())
 							&& x.getStateID() != kb.getStateID())
 					.reduce((p, c) -> c).orElse(null);
 
@@ -388,10 +391,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				kb.getDepends().setDependabilty_id(doKb.getStateID());
 			} else {
 
-				Rule r = this._ruleList
-						.stream()
-						.filter(x -> x.getSubject().getProjection()
-								.equals(kb.getSub().getProjection()))
+				Rule r = this._ruleList.stream()
+						.filter(x -> x.getSubject().getProjection().equals(kb.getSub().getProjection()))
 						.reduce((p, c) -> c).orElse(null);
 
 				if (r != null) {
@@ -400,10 +401,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					kb.getStateDepends().setD_part(1);
 					kb.getStateDepends().setD_id(r.getId());
 				} else {
-					Rule r2 = this._ruleList
-							.stream()
-							.filter(x -> x.getObject().getProjection()
-									.equals(kb.getSub().getProjection()))
+					Rule r2 = this._ruleList.stream()
+							.filter(x -> x.getObject().getProjection().equals(kb.getSub().getProjection()))
 							.reduce((p, c) -> c).orElse(null);
 
 					if (r2 != null) {
@@ -421,14 +420,12 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	}
 
 	@Override
-	public void enterOptionalGraphPattern(
-			@NotNull StreamingSparql.OptionalGraphPatternContext ctx) {
+	public void enterOptionalGraphPattern(@NotNull StreamingSparql.OptionalGraphPatternContext ctx) {
 		this.optional = true;
 	}
 
 	@Override
-	public void exitObjectListPath(
-			@NotNull StreamingSparql.ObjectListPathContext ctx) {
+	public void exitObjectListPath(@NotNull StreamingSparql.ObjectListPathContext ctx) {
 
 		// this.LLNFA_.add(this.LNFA_);
 		if (!this.graph && !construct) {
@@ -482,8 +479,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	 */
 	@Override
 	public void enterPrefixDecl(@NotNull StreamingSparql.PrefixDeclContext ctx) {
-		this.prefixes.put(ctx.PNAME_NS().getText().replace(":", ""), ctx
-				.IRIREF().getText().replace(">", ""));
+		this.prefixes.put(ctx.PNAME_NS().getText().replace(":", ""), ctx.IRIREF().getText().replace(">", ""));
 	}
 
 	/**
@@ -492,8 +488,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	 * @param ctx
 	 */
 	@Override
-	public void enterObjectListPath(
-			@NotNull StreamingSparql.ObjectListPathContext ctx) {
+	public void enterObjectListPath(@NotNull StreamingSparql.ObjectListPathContext ctx) {
 
 		// this.nfaData=new NFAdata();
 		ObjectS object = null;
@@ -501,34 +496,32 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		try {
 			object = new ObjectS();
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
 		String prefixCombinedValue = "";
 
-		if (ctx.objectPath(0).graphNodePath().varOrTerm().getChild(0)
-				.getChild(0).getChildCount() > 0) // /there is a graph term
+		if (ctx.objectPath(0).graphNodePath().varOrTerm().getChild(0).getChild(0).getChildCount() > 0) // /there
+																										// is
+																										// a
+																										// graph
+																										// term
 		{
 
 			if (ctx.getText().contains(":")) {
 				String str[] = ctx.getText().split(":");
 
-				prefixCombinedValue = this.prefixes.get(str[0]).iterator()
-						.next().toString()
-						+ str[1] + ">";
+				prefixCombinedValue = this.prefixes.get(str[0]).iterator().next().toString() + str[1] + ">";
 			} else {
 				prefixCombinedValue = ctx.getText();
 			}
 
 			/*
-			 * if
-			 * (ctx.objectPath(0).graphNodePath().varOrTerm().graphTerm().getStart
-			 * ().getType() != 118) { prefixCombinedValue = ctx.getText(); }
-			 * else if
+			 * if (ctx.objectPath(0).graphNodePath().varOrTerm().graphTerm().
+			 * getStart ().getType() != 118) { prefixCombinedValue =
+			 * ctx.getText(); } else if
 			 * (ctx.objectPath(0).graphNodePath().varOrTerm().graphTerm()
 			 * .iri().IRIREF() == null) { String str[] =
 			 * ctx.getText().split(":");
@@ -585,19 +578,15 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				this.rule.setObject(object);
 				// this._objList.add(object.getProjection());
 
-			} else if (object.isProjection()
-					&& this._sublist.contains(object.getProjection())
+			} else if (object.isProjection() && this._sublist.contains(object.getProjection())
 					&& this._objList.contains(object.getProjection())) {
 
 				Dependability depend = new Dependability();
 				String sd = object.getProjection();
-				int id1 = this._ruleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				int id1 = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId();
-				int id2 = this._ruleList
-						.stream()
-						.filter(x -> x.getObject().getProjection() != null
-								&& x.getObject().getProjection().equals(sd))
+				int id2 = this._ruleList.stream()
+						.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId();
 
 				if (id2 > id1) {
@@ -610,11 +599,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					depend.setDependability_part(1);
 					depend.setDependabilty_id(id1);
 
-					Rule r = this._ruleList
-							.stream()
-							.filter(x -> x.getSubject().getProjection()
-									.equals(sd)).reduce((p, c) -> c)
-							.orElse(null);
+					Rule r = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
+							.reduce((p, c) -> c).orElse(null);
 					if (r != null && r.getDepends().isEmpty()) {
 						Dependability dependR2 = new Dependability();
 						dependR2.setDependability_On(1);
@@ -629,20 +615,18 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				this.rule.setDependabilty_flag(true);
 				this.rule.setQueryType(2);
 				this._objList.add(object.getProjection());
-			} else if (object.isProjection()
-					&& this._sublist.contains(object.getProjection())) { // /if
-																			// depdndabilty
-																			// is
-																			// on
-																			// Subject
+			} else if (object.isProjection() && this._sublist.contains(object.getProjection())) { // /if
+																									// depdndabilty
+																									// is
+																									// on
+																									// Subject
 				Dependability depend = new Dependability();
 
 				depend.setDependability_On(0);
 				depend.setDependability_part(1);
 				String sd = object.getProjection();
 
-				depend.setDependabilty_id(this._ruleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				depend.setDependabilty_id(this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId());
 
 				this._dependList.add(depend);
@@ -657,12 +641,11 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 			}
 
-			else if (object.isProjection()
-					&& this._objList.contains(object.getProjection())) { // /if
-																			// depdndabilty
-																			// is
-																			// on
-																			// Subject
+			else if (object.isProjection() && this._objList.contains(object.getProjection())) { // /if
+																								// depdndabilty
+																								// is
+																								// on
+																								// Subject
 				Dependability depend = new Dependability();
 
 				depend.setDependability_On(0);
@@ -671,10 +654,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				// int id=
 				// this._ruleList.stream().filter(x->x.getSubject().getProjection().equals(sd)).reduce((p,c)->c).orElse(null).getId();
 
-				depend.setDependabilty_id(this._ruleList
-						.stream()
-						.filter(x -> x.getObject().getProjection() != null
-								&& x.getObject().getProjection().equals(sd))
+				depend.setDependabilty_id(this._ruleList.stream()
+						.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId());
 				// depend.setDependabilty_id(this._sublist.indexOf(object.getProjection()));
 				this._dependList.add(depend);
@@ -689,12 +670,11 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 			}
 
-			else if (object.isProjection()
-					&& (!this._objList.contains(object.getProjection()))) { // /may
-																			// be
-																			// useless
-																			// I
-																			// think...
+			else if (object.isProjection() && (!this._objList.contains(object.getProjection()))) { // /may
+																									// be
+																									// useless
+																									// I
+																									// think...
 				this.rule.setObject(object);
 				this._objList.add(object.getProjection());
 			}
@@ -720,20 +700,16 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			this.kbRule.setObject(object);
 			// this._objList.add(object.getProjection());
 
-		} else if (object.isProjection()
-				&& this._kbSubList.contains(object.getProjection())
+		} else if (object.isProjection() && this._kbSubList.contains(object.getProjection())
 				&& this._kbObjList.contains(object.getProjection())) {
 
 			Dependability depend = new Dependability();
 			String sd = object.getProjection();
 
-			int id1 = _kbRuleList.stream()
-					.filter(x -> x.getSubject().getProjection().equals(sd))
-					.reduce((p, c) -> c).orElse(null).getId();
-			int id2 = _kbRuleList
-					.stream()
-					.filter(x -> x.getObject().getProjection() != null
-							&& x.getObject().getProjection().equals(sd))
+			int id1 = _kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd)).reduce((p, c) -> c)
+					.orElse(null).getId();
+			int id2 = _kbRuleList.stream()
+					.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId();
 
 			if (id2 > id1) {
@@ -748,8 +724,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				depend.setDependabilty_id(id1);
 				depend.setBlockID(4000);
 
-				KBRule r = this._kbRuleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				KBRule r = this._kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null);
 				if (r != null && r.getDepends().isEmpty()) {
 					Dependability dependR2 = new Dependability();
@@ -766,11 +741,11 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			this.kbRule.setDependabilty_flag(true);
 			// this.kbRule.setQueryType(2);
 			this._kbObjList.add(object.getProjection());
-		} else if (object.isProjection()
-				&& this._kbSubList.contains(object.getProjection())) { // /if
-																		// depdndabilty
-																		// is on
-																		// Subject
+		} else if (object.isProjection() && this._kbSubList.contains(object.getProjection())) { // /if
+																								// depdndabilty
+																								// is
+																								// on
+																								// Subject
 			Dependability depend = new Dependability();
 
 			depend.setDependability_On(0);
@@ -780,8 +755,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// int id=
 			// this._ruleList.stream().filter(x->x.getSubject().getProjection().equals(sd)).reduce((p,c)->c).orElse(null).getId();
 
-			depend.setDependabilty_id(this._kbRuleList.stream()
-					.filter(x -> x.getSubject().getProjection().equals(sd))
+			depend.setDependabilty_id(this._kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId());
 			// depend.setDependabilty_id(this._sublist.indexOf(object.getProjection()));
 			this._dependList.add(depend);
@@ -796,11 +770,11 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 		}
 
-		else if (object.isProjection()
-				&& this._kbObjList.contains(object.getProjection())) { // /if
-																		// depdndabilty
-																		// is on
-																		// Subject
+		else if (object.isProjection() && this._kbObjList.contains(object.getProjection())) { // /if
+																								// depdndabilty
+																								// is
+																								// on
+																								// Subject
 			Dependability depend = new Dependability();
 
 			depend.setDependability_On(0);
@@ -810,10 +784,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// int id=
 			// this._ruleList.stream().filter(x->x.getSubject().getProjection().equals(sd)).reduce((p,c)->c).orElse(null).getId();
 
-			depend.setDependabilty_id(this._kbRuleList
-					.stream()
-					.filter(x -> x.getObject().getProjection() != null
-							&& x.getObject().getProjection().equals(sd))
+			depend.setDependabilty_id(this._kbRuleList.stream()
+					.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId());
 			// depend.setDependabilty_id(this._sublist.indexOf(object.getProjection()));
 			this._dependList.add(depend);
@@ -828,12 +800,11 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 		}
 
-		else if (object.isProjection()
-				&& (!this._kbObjList.contains(object.getProjection()))) { // /may
-																			// be
-																			// useless
-																			// I
-																			// think...
+		else if (object.isProjection() && (!this._kbObjList.contains(object.getProjection()))) { // /may
+																									// be
+																									// useless
+																									// I
+																									// think...
 			this.kbRule.setObject(object);
 			this._kbObjList.add(object.getProjection());
 		}
@@ -849,20 +820,16 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			this.kbRule.setSubject(subject);
 			// this._sublist.add(subject.getProjection());
 
-		} else if (subject.isProjection()
-				&& this._kbSubList.contains(subject.getProjection())
+		} else if (subject.isProjection() && this._kbSubList.contains(subject.getProjection())
 				&& this._kbObjList.contains(subject.getProjection())) {
 
 			Dependability depend = new Dependability();
 			String sd = subject.getProjection();
 
-			int id1 = this._kbRuleList.stream()
-					.filter(x -> x.getSubject().getProjection().equals(sd))
+			int id1 = this._kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId();
-			int id2 = this._kbRuleList
-					.stream()
-					.filter(x -> x.getObject().getProjection() != null
-							&& x.getObject().getProjection().equals(sd))
+			int id2 = this._kbRuleList.stream()
+					.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId();
 
 			if (id1 > id2) {
@@ -873,8 +840,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 				// /////////////
 
-				KBRule r = this._kbRuleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				KBRule r = this._kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null);
 				if (r != null && r.getDepends().isEmpty()) {
 					Dependability dependR2 = new Dependability();
@@ -899,8 +865,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// this.kbRule.setQueryType(2);
 			this._kbSubList.add(subject.getProjection());
 
-		} else if (subject.isProjection()
-				&& this._kbSubList.contains(subject.getProjection())) {
+		} else if (subject.isProjection() && this._kbSubList.contains(subject.getProjection())) {
 			Dependability depend = new Dependability();
 
 			depend.setDependability_On(1);
@@ -912,8 +877,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// int id=
 			// this._ruleList.stream().filter(x->x.getSubject().getProjection().equals(sd)).reduce((p,c)->c).orElse(null).getId();
 
-			depend.setDependabilty_id(this._kbRuleList.stream()
-					.filter(x -> x.getSubject().getProjection().equals(sd))
+			depend.setDependabilty_id(this._kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId());
 			this._dependList.add(depend);
 			this.kbRule.setSubject(subject);
@@ -921,8 +885,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// / this.kbRule.setQueryType(2); //1 for chain, 2 for star and 3
 			// for joiner
 
-			KBRule r = this._kbRuleList.stream()
-					.filter(x -> x.getSubject().getProjection().equals(sd))
+			KBRule r = this._kbRuleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null);
 			if (r != null && r.getDepends().isEmpty()) {
 				Dependability dependR2 = new Dependability();
@@ -934,8 +897,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			}
 
 			this._kbSubList.add(subject.getProjection());
-		} else if (subject.isProjection()
-				&& this._kbObjList.contains(subject.getProjection())) {
+		} else if (subject.isProjection() && this._kbObjList.contains(subject.getProjection())) {
 			Dependability depend = new Dependability();
 			depend.setDependability_On(1);
 			depend.setDependability_part(0);
@@ -945,10 +907,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// int id=
 			// this._ruleList.stream().filter(x->x.getSubject().getProjection().equals(sd)).reduce((p,c)->c).orElse(null).getId();
 
-			depend.setDependabilty_id(this._kbRuleList
-					.stream()
-					.filter(x -> x.getObject().getProjection() != null
-							&& x.getObject().getProjection().equals(sd))
+			depend.setDependabilty_id(this._kbRuleList.stream()
+					.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 					.reduce((p, c) -> c).orElse(null).getId());
 
 			// depend.setDependabilty_id(this._objList.indexOf(subject.getProjection()));
@@ -960,8 +920,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			this._kbSubList.add(subject.getProjection());
 			// ///
 
-		} else if (subject.isProjection() || this._kbSubList.isEmpty()
-				&& (!this._kbSubList.contains(subject.getProjection()))) {
+		} else if (subject.isProjection()
+				|| this._kbSubList.isEmpty() && (!this._kbSubList.contains(subject.getProjection()))) {
 			this.kbRule.setSubject(subject);
 			this._kbSubList.add(subject.getProjection());
 		}
@@ -976,8 +936,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	 * @param ctx
 	 */
 	@Override
-	public void enterTriplesSameSubjectPath(
-			@NotNull StreamingSparql.TriplesSameSubjectPathContext ctx) {
+	public void enterTriplesSameSubjectPath(@NotNull StreamingSparql.TriplesSameSubjectPathContext ctx) {
 
 		// System.out.println(ctx.getText());
 		String prefixCombinedValue = "";
@@ -996,11 +955,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 															// queries///
 
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
 		// this.nfaData=new NFAdata();
@@ -1010,11 +967,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			try {
 				this.kbRule = new KBRule();
 			} catch (ParseException ex) {
-				Logger.getLogger(ListenerQueryContextUpdated.class.getName())
-						.log(Level.SEVERE, null, ex);
+				Logger.getLogger(ListenerQueryContextUpdated.class.getName()).log(Level.SEVERE, null, ex);
 			} catch (DatatypeConfigurationException ex) {
-				Logger.getLogger(ListenerQueryContextUpdated.class.getName())
-						.log(Level.SEVERE, null, ex);
+				Logger.getLogger(ListenerQueryContextUpdated.class.getName()).log(Level.SEVERE, null, ex);
 			}
 			this.kbRule.setId(this.kbStateCount);
 
@@ -1024,11 +979,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		try {
 			subject = new Subject();
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
 		// System.out.println(ctx.varOrTerm().getChild(0).getChild(0).getChildCount());
@@ -1041,9 +994,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			if (ctx.varOrTerm().graphTerm().iri().IRIREF() == null) {
 				String str[] = ctx.varOrTerm().getText().split(":");
 
-				prefixCombinedValue = this.prefixes.get(str[0]).iterator()
-						.next().toString()
-						+ str[1] + ">";
+				prefixCombinedValue = this.prefixes.get(str[0]).iterator().next().toString() + str[1] + ">";
 			} else {
 				prefixCombinedValue = ctx.varOrTerm().graphTerm().getText();
 			}
@@ -1079,34 +1030,28 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				// this.nfaData.setStateId(1);
 				// this.nfaData.setStateName("Subject");
 				catch (ParseException ex) {
-					Logger.getLogger(ListenerQueryContext.class.getName()).log(
-							Level.SEVERE, null, ex);
+					Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 				} catch (DatatypeConfigurationException ex) {
-					Logger.getLogger(ListenerQueryContext.class.getName()).log(
-							Level.SEVERE, null, ex);
+					Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 				}
 			}
 		} else {
 			if (!this.graph) {
-				subject.setProjection(ctx.varOrTerm().getText()
-						.replace("?", ""));
+				subject.setProjection(ctx.varOrTerm().getText().replace("?", ""));
 				subject.setIsProjection(true);
-				subject.setProjectionMapped(
-						ctx.varOrTerm().getText().replace("?", ""), dictImplOp); // /no
-																					// pint
-																					// of
-																					// mapping
-																					// projection
+				subject.setProjectionMapped(ctx.varOrTerm().getText().replace("?", ""), dictImplOp); // /no
+																										// pint
+																										// of
+																										// mapping
+																										// projection
 				// projection =true;
 				// ////////////Add the Subject and check the list if its there
 				// or not, if its there then add the dependability stuff/////
 
 			} else {
-				subject.setProjection(ctx.varOrTerm().getText()
-						.replace("?", ""));
+				subject.setProjection(ctx.varOrTerm().getText().replace("?", ""));
 				subject.setIsProjection(true);
-				subject.setProjectionMapped(
-						ctx.varOrTerm().getText().replace("?", ""), dictImplOp);
+				subject.setProjectionMapped(ctx.varOrTerm().getText().replace("?", ""), dictImplOp);
 				/*
 				 * try { this.bind = new KBbindings(); } catch (ParseException
 				 * ex) {
@@ -1130,20 +1075,16 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				this.rule.setSubject(subject);
 				// this._sublist.add(subject.getProjection());
 
-			} else if (subject.isProjection()
-					&& this._sublist.contains(subject.getProjection())
+			} else if (subject.isProjection() && this._sublist.contains(subject.getProjection())
 					&& this._objList.contains(subject.getProjection())) {
 
 				Dependability depend = new Dependability();
 				String sd = subject.getProjection();
 
-				int id1 = this._ruleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				int id1 = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId();
-				int id2 = this._ruleList
-						.stream()
-						.filter(x -> x.getObject().getProjection() != null
-								&& x.getObject().getProjection().equals(sd))
+				int id2 = this._ruleList.stream()
+						.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId();
 
 				if (id1 > id2) {
@@ -1153,11 +1094,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 					// /////////////
 
-					Rule r = this._ruleList
-							.stream()
-							.filter(x -> x.getSubject().getProjection()
-									.equals(sd)).reduce((p, c) -> c)
-							.orElse(null);
+					Rule r = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
+							.reduce((p, c) -> c).orElse(null);
 					if (r != null && r.getDepends().isEmpty()) {
 						Dependability dependR2 = new Dependability();
 						dependR2.setDependability_On(1);
@@ -1175,8 +1113,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					// /////////////
 
 					/*
-					 * Rule r=
-					 * this._ruleList.stream().filter(x->x.getObject().getProjection
+					 * Rule r= this._ruleList.stream().filter(x->x.getObject().
+					 * getProjection
 					 * ().equals(sd)).reduce((p,c)->c).orElse(null); if(r!=null
 					 * && r.getDepends().isEmpty()){ Dependability dependR2=new
 					 * Dependability(); dependR2.setDependability_On(0);
@@ -1193,8 +1131,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				this.rule.setQueryType(2);
 				this._sublist.add(subject.getProjection());
 
-			} else if (subject.isProjection()
-					&& this._sublist.contains(subject.getProjection())) {
+			} else if (subject.isProjection() && this._sublist.contains(subject.getProjection())) {
 				Dependability depend = new Dependability();
 
 				depend.setDependability_On(1);
@@ -1202,8 +1139,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 				String sd = subject.getProjection();
 
-				depend.setDependabilty_id(this._ruleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				depend.setDependabilty_id(this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId());
 				this._dependList.add(depend);
 				this.rule.setSubject(subject);
@@ -1211,8 +1147,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				this.rule.setQueryType(2); // 1 for chain, 2 for star and 3 for
 											// joiner
 
-				Rule r = this._ruleList.stream()
-						.filter(x -> x.getSubject().getProjection().equals(sd))
+				Rule r = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null);
 				if (r != null && r.getDepends().isEmpty()) {
 					Dependability dependR2 = new Dependability();
@@ -1224,18 +1159,15 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 				this._sublist.add(subject.getProjection());
 
-			} else if (subject.isProjection()
-					&& this._objList.contains(subject.getProjection())) {
+			} else if (subject.isProjection() && this._objList.contains(subject.getProjection())) {
 				Dependability depend = new Dependability();
 				depend.setDependability_On(1);
 				depend.setDependability_part(0);
 
 				String sd = subject.getProjection();
 
-				depend.setDependabilty_id(this._ruleList
-						.stream()
-						.filter(x -> x.getObject().getProjection() != null
-								&& x.getObject().getProjection().equals(sd))
+				depend.setDependabilty_id(this._ruleList.stream()
+						.filter(x -> x.getObject().getProjection() != null && x.getObject().getProjection().equals(sd))
 						.reduce((p, c) -> c).orElse(null).getId());
 
 				this._dependList.add(depend);
@@ -1248,8 +1180,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 			}
 
-			else if (subject.isProjection() || this._sublist.isEmpty()
-					&& (!this._sublist.contains(subject.getProjection()))) {
+			else if (subject.isProjection()
+					|| this._sublist.isEmpty() && (!this._sublist.contains(subject.getProjection()))) {
 				this.rule.setSubject(subject);
 				this._sublist.add(subject.getProjection());
 			}
@@ -1276,21 +1208,16 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	private void constObjCheck() {
 		if (this.rule.getObject().getProjection() != null) {
 
-			List<Rule> constRules = this._constRules
-					.stream()
+			List<Rule> constRules = this._constRules.stream()
 					.filter(x -> x.getObject().getProjection() != null
-							&& x.getObject()
-									.getProjection()
-									.equals(this.rule.getObject()
-											.getProjection()))
+							&& x.getObject().getProjection().equals(this.rule.getObject().getProjection()))
 					.collect(Collectors.toList());
 
 			for (Rule r : constRules) {
 				if (r.getDepends() == null) {
 					r.setDepends(new ArrayList<>());
 				}
-				if (r.getDepends().stream()
-						.filter(x -> x.getDependability_On() == 0).count() < 1)
+				if (r.getDepends().stream().filter(x -> x.getDependability_On() == 0).count() < 1)
 
 				{
 					Dependability dd = new Dependability();
@@ -1302,21 +1229,16 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					r.getDepends().add(dd);
 				}
 			}
-			constRules = this._constRules
-					.stream()
+			constRules = this._constRules.stream()
 					.filter(x -> x.getSubject().getProjection() != null
-							&& x.getSubject()
-									.getProjection()
-									.equals(this.rule.getObject()
-											.getProjection()))
+							&& x.getSubject().getProjection().equals(this.rule.getObject().getProjection()))
 					.collect(Collectors.toList());
 
 			for (Rule r : constRules) {
 				if (r.getDepends() == null) {
 					r.setDepends(new ArrayList<>());
 				}
-				if (r.getDepends().stream()
-						.filter(x -> x.getDependability_On() == 0).count() < 1)
+				if (r.getDepends().stream().filter(x -> x.getDependability_On() == 0).count() < 1)
 
 				{
 					Dependability dd = new Dependability();
@@ -1334,21 +1256,16 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 	private void constSubCheck() {
 		if (this.rule.getSubject().getProjection() != null) {
-			List<Rule> constRules = this._constRules
-					.stream()
+			List<Rule> constRules = this._constRules.stream()
 					.filter(x -> x.getObject().getProjection() != null
-							&& x.getObject()
-									.getProjection()
-									.equals(this.rule.getSubject()
-											.getProjection()))
+							&& x.getObject().getProjection().equals(this.rule.getSubject().getProjection()))
 					.collect(Collectors.toList());
 
 			for (Rule r : constRules) {
 				if (r.getDepends() == null) {
 					r.setDepends(new ArrayList<>());
 				}
-				if (r.getDepends().stream()
-						.filter(x -> x.getDependability_On() == 0).count() < 1)
+				if (r.getDepends().stream().filter(x -> x.getDependability_On() == 0).count() < 1)
 
 				{
 					Dependability dd = new Dependability();
@@ -1361,13 +1278,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				}
 			}
 
-			constRules = this._constRules
-					.stream()
+			constRules = this._constRules.stream()
 					.filter(x -> x.getSubject().getProjection() != null
-							&& x.getSubject()
-									.getProjection()
-									.equals(this.rule.getSubject()
-											.getProjection()))
+							&& x.getSubject().getProjection().equals(this.rule.getSubject().getProjection()))
 					.collect(Collectors.toList());
 
 			for (Rule r : constRules) {
@@ -1375,8 +1288,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					r.setDepends(new ArrayList<>());
 
 				}
-				if (r.getDepends().stream()
-						.filter(x -> x.getDependability_On() == 1).count() < 1)
+				if (r.getDepends().stream().filter(x -> x.getDependability_On() == 1).count() < 1)
 
 				{
 					Dependability dd = new Dependability();
@@ -1403,11 +1315,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		try {
 			predicate = new Predicate();
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
 		System.out.println(ctx.getText());
@@ -1418,8 +1328,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			predicate.setIsProjection(true);
 			// this.state.setPredicate(predicate);
 
-			if (this._predList.isEmpty()
-					&& (!this._predList.contains(predicate.getProjection()))) {
+			if (this._predList.isEmpty() && (!this._predList.contains(predicate.getProjection()))) {
 				this.rule.setPredicate(predicate);
 
 				this._predList.add(predicate.getProjection());
@@ -1428,8 +1337,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 				depend.setDependability_On(2);
 				depend.setDependability_part(2);
-				depend.setDependabilty_id(this._predList.indexOf(predicate
-						.getProjection()));
+				depend.setDependabilty_id(this._predList.indexOf(predicate.getProjection()));
 				this._dependList.add(depend);
 				this.rule.setDependabilty_flag(true);
 				this.rule.setPredicate(predicate);
@@ -1466,23 +1374,19 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		try {
 			predicate = new Predicate();
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
-		if (ctx.path().pathAlternative().pathSequence(0).pathEltOrInverse(0)
-				.pathElt().pathPrimary().iri().IRIREF() == null) {
+		if (ctx.path().pathAlternative().pathSequence(0).pathEltOrInverse(0).pathElt().pathPrimary().iri()
+				.IRIREF() == null) {
 
 			// /search for the prefixes in the miltumap and then assign the
 			// variable
 			String str[] = ctx.getText().split(":");
 
-			prefixCombinedValue = this.prefixes.get(str[0]).iterator().next()
-					.toString()
-					+ str[1] + ">";
+			prefixCombinedValue = this.prefixes.get(str[0]).iterator().next().toString() + str[1] + ">";
 		} else {
 			prefixCombinedValue = ctx.getText();
 		}
@@ -1511,8 +1415,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 	// Means it enters the Filter expression
 	@Override
-	public void enterRelationalExpression(
-			@NotNull StreamingSparql.RelationalExpressionContext ctx) {
+	public void enterRelationalExpression(@NotNull StreamingSparql.RelationalExpressionContext ctx) {
 
 		// System.out.println(ctx.getText());
 		Filter filterVars = new Filter(this.dictImplOp);
@@ -1520,8 +1423,13 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		// System.out.println(ctx.expression(1).getText());
 		// System.out.println( ctx.op.getText());
 		filterVars.setIsFilter(true);
-		filterVars.setFilterProjection(ctx.expression(0).getText()
-				.replace("?", "")); // /ther could be URI at this palce
+		filterVars.setFilterProjection(ctx.expression(0).getText().replace("?", "")); // /ther
+																						// could
+																						// be
+																						// URI
+																						// at
+																						// this
+																						// palce
 
 		// ///check for the rule list and put the filter over here/////
 
@@ -1530,24 +1438,21 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		try {
 
 			if (ctx.expression(1).getText().startsWith("?")) {
-				filterVars.setFilterRightProjection(ctx.expression(1).getText()
-						.replace("?", ""));
+				filterVars.setFilterRightProjection(ctx.expression(1).getText().replace("?", ""));
 				filterVars.setFilterType(2);
 				// filterVars.setIsfilterKB(true); ///could not be a KB filter,
 				// this shoudl get true only if variable matches the KB,
 				// otherwise it should not be
 			} else {
-				filterVars.setFilterValue(ctx.expression(1).getText());
+				filterVars.setFilterValue(ctx.expression(1).getText(), map);
 				filterVars.setIsfilterKB(false);
 				filterVars.setFilterType(1);
 			}
 
 		} catch (ParseException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (DatatypeConfigurationException ex) {
-			Logger.getLogger(ListenerQueryContext.class.getName()).log(
-					Level.SEVERE, null, ex);
+			Logger.getLogger(ListenerQueryContext.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
 		filterVars.setFilterOperand(ctx.op.getText());
@@ -1561,8 +1466,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			// operand....Push the filter contanst as an object to the rule
 
 			if (rule.getObject().getProjection() != null) {
-				if (rule.getObject().getProjection()
-						.equals(filterVars.getFilterProjection())
+				if (rule.getObject().getProjection().equals(filterVars.getFilterProjection())
 						&& 1 == filterVars.getFilterType()) { // in case of
 																// object
 																// projection in
@@ -1582,8 +1486,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 					rule.setFilterFlag(true);
 					// rule.setFilterType1Operator(null);
-				} else if (rule.getSubject().getProjection()
-						.equals(filterVars.getFilterProjection())
+				} else if (rule.getSubject().getProjection().equals(filterVars.getFilterProjection())
 						&& 1 == filterVars.getFilterType()) { // /in case of
 																// subject
 																// projection in
@@ -1603,20 +1506,19 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 					// /if double filter of type 2
 				} else if (2 == filterVars.getFilterType()
-						&& rule.getObject().getProjection()
-								.equals(filterVars.getFilterProjection())) { // If
-																				// there
-																				// are
-																				// two
-																				// variables
-																				// on
-																				// the
-																				// both
-																				// sides
-																				// of
-																				// the
-																				// filter
-																				// operand
+						&& rule.getObject().getProjection().equals(filterVars.getFilterProjection())) { // If
+																										// there
+																										// are
+																										// two
+																										// variables
+																										// on
+																										// the
+																										// both
+																										// sides
+																										// of
+																										// the
+																										// filter
+																										// operand
 
 					// if(!this.filterObject(filterVars,rule)){///if the result
 					// is false then go for statefull object
@@ -1627,8 +1529,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					// }
 
 				} else if (2 == filterVars.getFilterType()
-						&& rule.getSubject().getProjection()
-								.equals(filterVars.getFilterProjection())) {
+						&& rule.getSubject().getProjection().equals(filterVars.getFilterProjection())) {
 					filterSubject(filterVars, rule); // /if the result is false
 														// then go for statefull
 														// subject
@@ -1652,34 +1553,26 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		// otherwise its a statefull object and it needs to be checked for the
 		// upper query variables///
 
-		List<Rule> r = this._ruleList
-				.stream()
+		List<Rule> r = this._ruleList.stream()
 				.filter(x -> x.getObject().getProjection() != null
-						&& x.getObject().getProjection()
-								.equals(filterVars.getFilterRightProjection()))
+						&& x.getObject().getProjection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
 		// //to check the list of subjects/////
 
-		List<Rule> r2 = this._ruleList
-				.stream()
+		List<Rule> r2 = this._ruleList.stream()
 				.filter(x -> x.getSubject().getProjection() != null
-						&& x.getSubject().getProjection()
-								.equals(filterVars.getFilterRightProjection()))
+						&& x.getSubject().getProjection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
-		List<KBbindings> kr = this._bindList
-				.stream()
+		List<KBbindings> kr = this._bindList.stream()
 				.filter(x -> x.getObjectPtojection() != null
-						&& x.getObjectPtojection().equals(
-								filterVars.getFilterRightProjection()))
+						&& x.getObjectPtojection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
-		List<KBbindings> kr2 = this._bindList
-				.stream()
+		List<KBbindings> kr2 = this._bindList.stream()
 				.filter(x -> x.getSubjectProjection() != null
-						&& x.getSubjectProjection().equals(
-								filterVars.getFilterRightProjection()))
+						&& x.getSubjectProjection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
 		if (!r.isEmpty()) {
@@ -1791,30 +1684,22 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		// otherwise its a statefull object and it needs to be checked for the
 		// upper query variables///
 
-		List<Rule> r = this._ruleList
-				.stream()
-				.filter(x -> x.getObject().getProjection()
-						.equals(filterVars.getFilterRightProjection()))
+		List<Rule> r = this._ruleList.stream()
+				.filter(x -> x.getObject().getProjection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
 		// //to check the list of subjects/////
 
-		List<Rule> r2 = this._ruleList
-				.stream()
-				.filter(x -> x.getSubject().getProjection()
-						.equals(filterVars.getFilterRightProjection()))
+		List<Rule> r2 = this._ruleList.stream()
+				.filter(x -> x.getSubject().getProjection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
-		List<KBbindings> kr = this._bindList
-				.stream()
-				.filter(x -> x.getObjectPtojection().equals(
-						filterVars.getFilterRightProjection()))
+		List<KBbindings> kr = this._bindList.stream()
+				.filter(x -> x.getObjectPtojection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
-		List<KBbindings> kr2 = this._bindList
-				.stream()
-				.filter(x -> x.getSubjectProjection().equals(
-						filterVars.getFilterRightProjection()))
+		List<KBbindings> kr2 = this._bindList.stream()
+				.filter(x -> x.getSubjectProjection().equals(filterVars.getFilterRightProjection()))
 				.collect(Collectors.toList());
 
 		if (!r.isEmpty()) {
@@ -1872,11 +1757,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	private void kbfirstLevelStatefulSubject(Subject subject) {
 		// /check all the rule in the NFA rule list
 
-		Rule r = this._ruleList
-				.stream()
-				.filter(x -> x.getSubject().getProjection()
-						.equals(subject.getProjection())).findFirst()
-				.orElse(null);
+		Rule r = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(subject.getProjection()))
+				.findFirst().orElse(null);
 		// /add the dependency in the list
 
 		if (r != null) {
@@ -1890,11 +1772,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			this._dependList.add(depend);
 		}
 
-		r = this._ruleList
-				.stream()
-				.filter(x -> x.getObject().getProjection()
-						.equals(subject.getProjection())).findFirst()
-				.orElse(null);
+		r = this._ruleList.stream().filter(x -> x.getObject().getProjection().equals(subject.getProjection()))
+				.findFirst().orElse(null);
 
 		if (r != null) {
 			Dependability depend = new Dependability();
@@ -1912,11 +1791,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 	private void kbfirstLevelStatefulObject(ObjectS object) {
 		// /check all the rule in the NFA rule list
 
-		Rule r = this._ruleList
-				.stream()
-				.filter(x -> x.getSubject().getProjection()
-						.equals(object.getProjection())).findFirst()
-				.orElse(null);
+		Rule r = this._ruleList.stream().filter(x -> x.getSubject().getProjection().equals(object.getProjection()))
+				.findFirst().orElse(null);
 		// /add the dependency in the list
 
 		if (r != null) {
@@ -1929,11 +1805,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 			this._dependList.add(depend);
 		}
 
-		r = this._ruleList
-				.stream()
-				.filter(x -> x.getObject().getProjection()
-						.equals(object.getProjection())).findFirst()
-				.orElse(null);
+		r = this._ruleList.stream().filter(x -> x.getObject().getProjection().equals(object.getProjection()))
+				.findFirst().orElse(null);
 
 		if (r != null) {
 			Dependability depend = new Dependability();
@@ -1953,13 +1826,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 			for (int i = 0; i < this._nfaDataList.size(); i++) {
 
-				Rule rule = this._nfaDataList
-						.get(i)
-						.getRuleList()
-						.stream()
+				Rule rule = this._nfaDataList.get(i).getRuleList().stream()
 						.filter(x -> x.getSubject().isProjection()
-								&& x.getSubject().getProjection()
-										.equals(r.getSubject().getProjection()))
+								&& x.getSubject().getProjection().equals(r.getSubject().getProjection()))
 						.findFirst().orElse(null);
 				if (rule != null) {
 					StateDependability d = new StateDependability();
@@ -1978,15 +1847,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					break;
 
 				} else {
-					Rule rule2 = this._nfaDataList
-							.get(i)
-							.getRuleList()
-							.stream()
+					Rule rule2 = this._nfaDataList.get(i).getRuleList().stream()
 							.filter(x -> x.getObject().isProjection()
-									&& x.getObject()
-											.getProjection()
-											.equals(r.getSubject()
-													.getProjection()))
+									&& x.getObject().getProjection().equals(r.getSubject().getProjection()))
 							.findFirst().orElse(null);
 
 					if (rule2 != null) {
@@ -2022,13 +1885,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		if (r.getObject().isProjection()) {
 			for (int i = 0; i < this._nfaDataList.size(); i++) {
 
-				Rule rule = this._nfaDataList
-						.get(i)
-						.getRuleList()
-						.stream()
+				Rule rule = this._nfaDataList.get(i).getRuleList().stream()
 						.filter(x -> x.getObject().isProjection()
-								&& x.getObject().getProjection()
-										.equals(r.getObject().getProjection()))
+								&& x.getObject().getProjection().equals(r.getObject().getProjection()))
 						.reduce((p, c) -> c).orElse(null);
 				if (rule != null) {
 					StateDependability d = new StateDependability();
@@ -2046,15 +1905,9 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					break;
 
 				} else {
-					Rule rule2 = this._nfaDataList
-							.get(i)
-							.getRuleList()
-							.stream()
+					Rule rule2 = this._nfaDataList.get(i).getRuleList().stream()
 							.filter(x -> x.getSubject().isProjection()
-									&& x.getSubject()
-											.getProjection()
-											.equals(r.getObject()
-													.getProjection()))
+									&& x.getSubject().getProjection().equals(r.getObject().getProjection()))
 							.reduce((p, c) -> c).orElse(null);
 
 					if (rule2 != null) {
@@ -2087,12 +1940,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		for (int i = 0; i < this._nfaDataList.size(); i++) { // -1
 
 			// /for objects
-			Rule r = this._nfaDataList
-					.get(i)
-					.getRuleList()
-					.stream()
-					.filter(x -> x.getObject().getProjection()
-							.equals(filterVars.getFilterRightProjection()))
+			Rule r = this._nfaDataList.get(i).getRuleList().stream()
+					.filter(x -> x.getObject().getProjection().equals(filterVars.getFilterRightProjection()))
 					.findFirst().orElse(null); // /if there is no projection
 												// then will have some issues
 
@@ -2124,19 +1973,14 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				rule.getFilter().add(filterVars);
 
 			} else {
-				List<Rule> r2 = this._nfaDataList
-						.get(i)
-						.getRuleList()
-						.stream()
-						.filter(x -> x.getSubject().getProjection()
-								.equals(filterVars.getFilterRightProjection()))
+				List<Rule> r2 = this._nfaDataList.get(i).getRuleList().stream()
+						.filter(x -> x.getSubject().getProjection().equals(filterVars.getFilterRightProjection()))
 						.collect(Collectors.toList());
 				// //for subjects
 
 				if (!r2.isEmpty()) {
 
-					if ((rule.getId() > 0 && !rule.getDepends().stream()
-							.filter(x -> x.getDependability_On() == 0)
+					if ((rule.getId() > 0 && !rule.getDepends().stream().filter(x -> x.getDependability_On() == 0)
 							.collect(Collectors.toList()).isEmpty())) {
 						continue;
 					}
@@ -2191,12 +2035,8 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		for (int i = 0; i <= this._nfaDataList.size() - 1; i++) {
 
 			// /for objects
-			List<Rule> r = this._nfaDataList
-					.get(i)
-					.getRuleList()
-					.stream()
-					.filter(x -> x.getObject().getProjection()
-							.equals(filterVars.getFilterRightProjection()))
+			List<Rule> r = this._nfaDataList.get(i).getRuleList().stream()
+					.filter(x -> x.getObject().getProjection().equals(filterVars.getFilterRightProjection()))
 					.collect(Collectors.toList()); // /if there is no projection
 													// then will have some
 													// issues
@@ -2226,19 +2066,14 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 				rule.setFilterFlag(true);
 
 			} else {
-				List<Rule> r2 = this._nfaDataList
-						.get(i)
-						.getRuleList()
-						.stream()
-						.filter(x -> x.getSubject().getProjection()
-								.equals(filterVars.getFilterRightProjection()))
+				List<Rule> r2 = this._nfaDataList.get(i).getRuleList().stream()
+						.filter(x -> x.getSubject().getProjection().equals(filterVars.getFilterRightProjection()))
 						.collect(Collectors.toList());
 				// //for subjects
 
 				if (!r2.isEmpty()) {
 
-					if ((rule.getId() > 0 && !rule.getDepends().stream()
-							.filter(x -> x.getDependability_On() == 1)
+					if ((rule.getId() > 0 && !rule.getDepends().stream().filter(x -> x.getDependability_On() == 1)
 							.collect(Collectors.toList()).isEmpty())) {
 						continue;
 					}
@@ -2302,8 +2137,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		// patternData string
 		for (Rule r : this.nfaData.getRuleList()) {
 			if (r.getSubject().getProjection().equals(this.patternBy)) {
-				this.nfaData.getPatternByData().put(
-						r.getPredicate().getMappedValue(), this.patternBy);
+				this.nfaData.getPatternByData().put(r.getPredicate().getMappedValue(), this.patternBy);
 			}
 		}
 		// nfa.se
@@ -2320,8 +2154,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					KBDependability kDependSub = new KBDependability();
 					KBDependability kDependObj = new KBDependability();
 					if (r.getSubject().isProjection()
-							&& r.getSubject().getProjection()
-									.equals(k.getSub().getProjection())) {
+							&& r.getSubject().getProjection().equals(k.getSub().getProjection())) {
 						// //addd the kb bindings in the rule and set the flag
 						// to true
 
@@ -2333,8 +2166,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 						r.setKb_flag(true);
 
 					} else if (r.getObject().isProjection()
-							&& r.getObject().getProjection()
-									.equals(k.getSub().getProjection())) {
+							&& r.getObject().getProjection().equals(k.getSub().getProjection())) {
 						kDependSub.setDependability_On(0);
 						kDependSub.setDependability_part(1);
 						kDependSub.setDependability_property(k.getPred());
@@ -2352,8 +2184,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 					KBDependability kDependSub = new KBDependability();
 					KBDependability kDependObj = new KBDependability();
 					if (r.getSubject().isProjection()
-							&& r.getSubject().getProjection()
-									.equals(k.getObj().getProjection())) {
+							&& r.getSubject().getProjection().equals(k.getObj().getProjection())) {
 						// //addd the kb bindings in the rule and set the flag
 						// to true
 
@@ -2365,8 +2196,7 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 						r.setKb_flag(true);
 
 					} else if (r.getObject().isProjection()
-							&& r.getObject().getProjection()
-									.equals(k.getObj().getProjection())) {
+							&& r.getObject().getProjection().equals(k.getObj().getProjection())) {
 						kDependSub.setDependability_On(0);
 						kDependSub.setDependability_part(0);
 						kDependSub.setDependability_property(k.getPred());
@@ -2393,15 +2223,13 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 		if (this.selectvars != null) {
 			for (int i = 1; i < this.selectvars.size(); i++) {
 				if (this.rule.getObject().isProjection()
-						&& this.rule.getObject().getProjection()
-								.equals(selectvars.get(i))) {
+						&& this.rule.getObject().getProjection().equals(selectvars.get(i))) {
 					this.rule.setSelect(true);
 					this.rule.setSelectObj(true);
 				}
 
 				if (this.rule.getSubject().isProjection()
-						&& this.rule.getSubject().getProjection()
-								.equals(selectvars.get(i))) {
+						&& this.rule.getSubject().getProjection().equals(selectvars.get(i))) {
 					this.rule.setSelect(true);
 					this.rule.setSelectSub(true);
 				}
@@ -2416,15 +2244,13 @@ public class ListenerQueryContextUpdated extends StreamingSparqlBaseListener {
 
 			for (int i = 1; i < this.selectvars.size(); i++) {
 				if (this.kbRule.getObject().isProjection()
-						&& this.kbRule.getObject().getProjection()
-								.equals(selectvars.get(i))) {
+						&& this.kbRule.getObject().getProjection().equals(selectvars.get(i))) {
 					this.kbRule.setSelect(true);
 					this.kbRule.setSelectObj(true);
 				}
 
 				if (this.kbRule.getSubject().isProjection()
-						&& this.kbRule.getSubject().getProjection()
-								.equals(selectvars.get(i))) {
+						&& this.kbRule.getSubject().getProjection().equals(selectvars.get(i))) {
 					this.kbRule.setSelect(true);
 					this.kbRule.setSelectSub(true);
 				}

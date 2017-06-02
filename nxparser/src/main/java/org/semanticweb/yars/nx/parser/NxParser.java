@@ -52,10 +52,10 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	private String _line = null;
 	private Iterator<String> _stringIt = null;
 	private Node[] next = null;
-	private static Mappings map= new Mappings();
+	private static Mappings map = new Mappings();
 
 	public NxParser(Reader r) {
-		
+
 		this(new BufferedReader(r));
 	}
 
@@ -64,7 +64,7 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	}
 
 	public NxParser(InputStream is) {
-		this(new BufferedReader(new InputStreamReader(is),10240000));
+		this(new BufferedReader(new InputStreamReader(is), 10240000));
 	}
 
 	public NxParser(BufferedReader br) {
@@ -84,45 +84,44 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 		return next != null;
 	}
 
-	public Node[] next(){
-		if(next==null)
+	public Node[] next() {
+		if (next == null)
 			throw new NoSuchElementException();
 		Node[] now = next;
 		loadNext();
 		return now;
 	}
-	
+
 	private void loadNext() {
 		next = null;
-		do{
-			if (_stringIt.hasNext()){
+		do {
+			if (_stringIt.hasNext()) {
 				_line = _stringIt.next();
 			} else {
 				next = null;
 				return;
 			}
 			++_lineNo;
-		} while(_line==null || isEntirelyWhitespaceOrEmpty(_line));
-		//iterate until we get a non-blank line
-		
+		} while (_line == null || isEntirelyWhitespaceOrEmpty(_line));
+		// iterate until we get a non-blank line
+
 		try {
 			next = parseNodesInternal(_line);
 		} catch (Exception e) {
-			_log.warning("Moving on to the next line, as I couldn't parse line "
-					+ _lineNo + ": " + _line);
+			_log.warning("Moving on to the next line, as I couldn't parse line " + _lineNo + ": " + _line);
 			e.printStackTrace();
-			//invalid: skip and try again
+			// invalid: skip and try again
 			loadNext();
 		}
-		
-		if(next != null && next.length==0)
+
+		if (next != null && next.length == 0)
 			// next == null : invalid last line in the file
-			//valid but empty: skip and try again
+			// valid but empty: skip and try again
 			loadNext();
 	}
-	
-	private static boolean isEntirelyWhitespaceOrEmpty(String s){
-		for(char c:s.toCharArray()){
+
+	private static boolean isEntirelyWhitespaceOrEmpty(String s) {
+		for (char c : s.toCharArray()) {
 			if (!Character.isWhitespace(c))
 				return false;
 		}
@@ -151,9 +150,10 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	}
 
 	/**
-	 * Parses line and returns a Node[] contained within that line.
-	 * May return an empty Node[] if the line is valid N-Triples
-	 * but contains no nodes (e.g., a blank or comment line).
+	 * public Literal(String data, boolean isN3, HashMap<String, Integer> map) {
+	 * Parses line and returns a Node[] contained within that line. May return
+	 * an empty Node[] if the line is valid N-Triples but contains no nodes
+	 * (e.g., a blank or comment line).
 	 * 
 	 * @param line
 	 * @return
@@ -163,31 +163,34 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 		int startIndex = 0;
 		int endIndex = 0;
 		List<Node> nx = new LinkedList<Node>();
-		
-		if(line.isEmpty()) return new Node[0];
 
-		//instead of checking for individual IndexOutOfBoundExceptions,
-		//they are allowed to be thrown and caught in parseNodes()
-		
+		if (line.isEmpty())
+			return new Node[0];
+
+		// instead of checking for individual IndexOutOfBoundExceptions,
+		// they are allowed to be thrown and caught in parseNodes()
+
 		while (true) {
 			while (Character.isWhitespace(line.charAt(startIndex))) {
 				// skipping spaces
 				++startIndex;
 				++endIndex;
-				
-				if(startIndex==line.length()){
-					if(nx.isEmpty()){
+
+				if (startIndex == line.length()) {
+					if (nx.isEmpty()) {
 						return new Node[0];
-					} else{
-						throw new ParseException("Could not find closing '.' bracket for line "+line);
+					} else {
+						throw new ParseException("Could not find closing '.' bracket for line " + line);
 					}
 				}
 			}
 
 			if (line.charAt(startIndex) == '<') {
 				// resource.
-				endIndex = line.indexOf("> ", startIndex)+1;
-				if(endIndex==0) throw new ParseException("Could not find closing '>' bracket for resource starting at char "+startIndex+" while parsing line "+line);
+				endIndex = line.indexOf("> ", startIndex) + 1;
+				if (endIndex == 0)
+					throw new ParseException("Could not find closing '>' bracket for resource starting at char "
+							+ startIndex + " while parsing line " + line);
 				nx.add(new Resource(line.substring(startIndex, endIndex), true));
 			} else if (line.charAt(startIndex) == '_') {
 				// bnode.
@@ -195,12 +198,12 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 				nx.add(new BNode(line.substring(startIndex, endIndex), true));
 			} else if (line.charAt(startIndex) == '.') {
 				// statement's end.
-				if(nx.isEmpty()){
-					throw new ParseException("Exception at position " + startIndex+ " while parsing: '" + line +"'");
+				if (nx.isEmpty()) {
+					throw new ParseException("Exception at position " + startIndex + " while parsing: '" + line + "'");
 				}
-				for(int i=startIndex+1; i<line.length(); i++){
-					if(!Character.isWhitespace(line.charAt(i))){
-						throw new ParseException("Exception at position " + i + " while parsing: '" + line +"'");
+				for (int i = startIndex + 1; i < line.length(); i++) {
+					if (!Character.isWhitespace(line.charAt(i))) {
+						throw new ParseException("Exception at position " + i + " while parsing: '" + line + "'");
 					}
 				}
 				break;
@@ -212,15 +215,14 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 				do {
 					endIndex = line.indexOf('\"', endIndex + 1);
 				} while (line.charAt(endIndex - 1) == '\\'
-						&& (((endIndex - 1 - onlyCharUntil(line, '\\',
-								endIndex - 1)) % 2) == 0));
+						&& (((endIndex - 1 - onlyCharUntil(line, '\\', endIndex - 1)) % 2) == 0));
 				// ^^ if the number of backslashes in front of a quote is even,
 				// the found quote is the literal-delimiting one.
 				while (line.charAt(endIndex) != ' ') {
 					++endIndex;
 				}
-				nx.add(new Literal(line.substring(startIndex, endIndex), true,map.getMap()));
-			} else if(line.charAt(startIndex) == '#' && nx.isEmpty()){
+				nx.add(new Literal(line.substring(startIndex, endIndex), true, map.getMap()));
+			} else if (line.charAt(startIndex) == '#' && nx.isEmpty()) {
 				// comment line.
 				return new Node[0];
 			} else if (line.charAt(startIndex) == '?') {
@@ -229,19 +231,18 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 				nx.add(new Variable(line.substring(startIndex, endIndex), true));
 			} else if (line.charAt(startIndex) == Unbound.TO_STRING.charAt(0)) {
 				// unbound.
-				if (line.substring(startIndex,
-						startIndex + Unbound.TO_STRING.length()).equals(
-						Unbound.TO_STRING)) {
+				if (line.substring(startIndex, startIndex + Unbound.TO_STRING.length()).equals(Unbound.TO_STRING)) {
 					nx.add(new Unbound());
 					endIndex = startIndex + Unbound.TO_STRING.length();
-					if(endIndex >= line.length() || line.charAt(endIndex)!=' '){
-						throw new ParseException("Exception at position " + startIndex+ " while parsing: '" + line +"'");
+					if (endIndex >= line.length() || line.charAt(endIndex) != ' ') {
+						throw new ParseException(
+								"Exception at position " + startIndex + " while parsing: '" + line + "'");
 					}
-				} else{
-					throw new ParseException("Exception at position " + endIndex+ " while parsing: '" + line +"'");
+				} else {
+					throw new ParseException("Exception at position " + endIndex + " while parsing: '" + line + "'");
 				}
-			} else{
-				throw new ParseException("Exception at position " + endIndex+ " while parsing: '" + line +"'");
+			} else {
+				throw new ParseException("Exception at position " + endIndex + " while parsing: '" + line + "'");
 			}
 
 			startIndex = endIndex + 1;
@@ -275,8 +276,7 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	 *            the buffered reader
 	 * @return the iterator
 	 */
-	private static Iterator<String> stringItFromBufferedReader(
-			final BufferedReader br) {
+	private static Iterator<String> stringItFromBufferedReader(final BufferedReader br) {
 		return new Iterator<String>() {
 
 			boolean nextIsFetched = true;
@@ -344,7 +344,8 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	}
 
 	/**
-	 * @deprecated See {@link #NxParser(Reader, boolean)} and {@link #DEFAULT_PARSE_DTS}.
+	 * @deprecated See {@link #NxParser(Reader, boolean)} and
+	 *             {@link #DEFAULT_PARSE_DTS}.
 	 */
 	@Deprecated
 	public NxParser(Reader r, boolean strict, boolean parseDts) {
@@ -352,7 +353,8 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	}
 
 	/**
-	 * @deprecated See {@link #NxParser(Reader, boolean)} and {@link #DEFAULT_PARSE_DTS}.
+	 * @deprecated See {@link #NxParser(Reader, boolean)} and
+	 *             {@link #DEFAULT_PARSE_DTS}.
 	 */
 	@Deprecated
 	public NxParser(InputStream is, boolean strict, boolean parseDts) {
@@ -399,8 +401,7 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	 * @see #DEFAULT_PARSE_DTS
 	 */
 	@Deprecated
-	public static Node[] parseNodes(String line, boolean parseDts)
-			throws ParseException {
+	public static Node[] parseNodes(String line, boolean parseDts) throws ParseException {
 		return parseNodes(line);
 	}
 
@@ -418,12 +419,11 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	 * @see #DEFAULT_PARSE_DTS
 	 */
 	@Deprecated
-	public static Literal parseLiteral(String str, boolean parseDTs)
-			throws ParseException {
+	public static Literal parseLiteral(String str, boolean parseDTs) throws ParseException {
 		if (str.charAt(0) != '"') {
 			throw new ParseException("literal must be enclosed with \"\"");
 		}
-		return new Literal(str, true,map.getMap());
+		return new Literal(str, true, map.getMap());
 	}
 
 	/**
@@ -476,8 +476,7 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	 * @see #DEFAULT_PARSE_DTS
 	 */
 	@Deprecated
-	public static Node parseNode(String str, boolean parseDts)
-			throws ParseException {
+	public static Node parseNode(String str, boolean parseDts) throws ParseException {
 		if (str.charAt(0) == '_') {
 			// blank node
 			return parseBNode(str);
@@ -536,9 +535,9 @@ public class NxParser implements Iterator<Node[]>, Iterable<Node[]> {
 	@Deprecated
 	public static String unescape(String str, boolean clean) {
 		return NxUtil.unescape(str, clean);
-	}	
-	
-	public static void main(String[] args) throws ParseException{
+	}
+
+	public static void main(String[] args) throws ParseException {
 		System.err.println(Nodes.toN3(parseNodes("")));
 	}
 }

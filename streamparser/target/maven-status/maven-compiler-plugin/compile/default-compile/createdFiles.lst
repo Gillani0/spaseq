@@ -1,0 +1,8 @@
+fr/uim/curien/cep/inter/face/beans/FileType.class
+fr/ujm/curien/cep/inter/face/parser/StreamDirectorySpliterator.class
+fr/uim/curien/cep/inter/face/beans/QuadTimeFile.class
+fr/uim/curien/cep/inter/face/beans/StreamFiles.class
+fr/uim/curien/cep/inter/face/beans/TripleFile.class
+fr/ujm/curien/cep/inter/face/manager/StreamManagerOld.class
+fr/uim/curien/cep/inter/face/beans/QuadFile.class
+fr/ujm/curien/cep/inter/face/manager/EventGraphConsumer.class

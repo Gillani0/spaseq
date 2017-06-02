@@ -76,7 +76,6 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 	protected final MutableList<RunOptimised> streamPartitionedRuns;
 
 	protected final FastListMultimap<Long, RunOptimised> activeRunsPart; // =
-																			// new
 																			// FastListMultimap<Long,
 																			// RunOptimised>();
 	// private final HashBagMultimap<Long, RunOptimised> activeRunsPart = new

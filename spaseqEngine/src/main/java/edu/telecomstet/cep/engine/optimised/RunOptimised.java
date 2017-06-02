@@ -180,23 +180,12 @@ public class RunOptimised implements Cloneable {
 
 	public boolean checkStateType(GraphEvent e) throws Exception {
 
-		// Why the fuck string comparison with kleeneClosure
 		State s = this.nfa.getStates()[currentState];
+		// && s.getKleeneCounter() >= 1
+		if (s.getStateType().equalsIgnoreCase("kleeneClosure") && currentState != this.nfa.getSize() - 1
+				|| (s.isManager() && s.getSubstatesType() == 2)) {
 
-		if (s.getStateType().equalsIgnoreCase("kleeneClosure") && s.getKleeneCounter() >= 1
-				&& currentState != this.nfa.getSize() - 1 || (s.isManager() && s.getSubstatesType() == 2)) {
-			/// then check first if the stateevent counter is >=1, if so then
-			/// check the event on next state predicate if so, then extend it
-			/// next two states and add a new run with it
-
-			// state[currentState] = 2;
-			/// check the next state predicate///considering that the next state
-			// is a normal one
-			// int nextState=currentState+1;
-			// if(this.nfa.getStates()[nextState].canStartWithRDFEvent(e)){
-			// currentState++;
 			return true;
-			// }
 
 		}
 
@@ -234,6 +223,10 @@ public class RunOptimised implements Cloneable {
 			state[currentState] = 3;
 			this.nfa.getStates()[currentState].setKleeneCounter(count);
 			this.count++;
+			/***
+			 * Test
+			 */
+
 		}
 		if (this.count == 1) {
 			// this.startTimeStamp = e.getTimeStamp();

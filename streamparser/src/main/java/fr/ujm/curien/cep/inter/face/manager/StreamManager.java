@@ -50,6 +50,8 @@ public class StreamManager implements Runnable {
 	private boolean systemTime;
 	private long START_OF_THE_STREAM;
 
+	private long eventID = 0;
+
 	/**
 	 * read from stream files if random=false so the manager will send one
 	 * graphEvent from each stream file in an order way if random=true so the
