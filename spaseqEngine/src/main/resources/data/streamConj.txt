@@ -1,1 +1,0 @@
-<http://example.org/main> </Users/sydgillani/Documents/SPAseq2/spaseqmodules/spaseq-parent/spaseqEngine/src/main/resources/data/dataConjunction.nt> 2

@@ -1,0 +1,8 @@
+<http://example/company#Google> <http://example/name> "google"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://example/company#Google> <http://example/location> "usa"^^<http://www.w3.org/2001/XMLSchema#string> .
+
+<http://example/company#eBay>  <http://example/name> "ebay"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://example/company#eBay>  <http://example/location> "usa"^^<http://www.w3.org/2001/XMLSchema#string> .
+
+<http://example/company#Paypal>  <http://example/name> "paypal"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://example/company#Paypal>  <http://example/location> "usa"^^<http://www.w3.org/2001/XMLSchema#string> .

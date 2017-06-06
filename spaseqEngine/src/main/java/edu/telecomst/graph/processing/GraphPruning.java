@@ -9,8 +9,6 @@ package edu.telecomst.graph.processing;
 import java.util.Map;
 import java.util.Objects;
 
-import org.semanticweb.yars.nx.Literal;
-
 import com.jcwhatever.nucleus.collections.MultiBiMap;
 
 import edu.telecom.stet.cep.datastructure.KBindex;
@@ -254,34 +252,35 @@ public class GraphPruning implements GraphPruningAPI {
 			}
 
 			/// need to parse it into integer
-			if (r.getFilterType1Operator().equals(">")
-					&& ((Integer) ((Literal) (r.getObject().getValue())).getValue() < oInteger2)) {
+			if (r.getFilterType1Operator().equals(">") && ((Integer) ((r.getObject().getValue())) < oInteger2)) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<")
-					&& (Integer) ((Literal) (r.getObject().getValue())).getValue() > oInteger2) {
+			} else if (r.getFilterType1Operator().equals("<") && (Integer) ((r.getObject().getValue())) > oInteger2) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<=")
-					&& (Integer) ((Literal) (r.getObject().getValue())).getValue() >= oInteger2) {
+			} else if (r.getFilterType1Operator().equals("<=") && (Integer) ((r.getObject().getValue())) >= oInteger2) {
 				return true;
 
-			} else if (r.getFilterType1Operator().equals(">=")
-					&& (Integer) ((Literal) (r.getObject().getValue())).getValue() <= oInteger2) {
+			} else if (r.getFilterType1Operator().equals(">=") && (Integer) ((r.getObject().getValue())) <= oInteger2) {
+
+				// System.out.println(((Literal)
+				// (r.getObject().getValue())).getValue() + " " + "" +
+				// oInteger2);
+
 				return true;
 			}
 
 		} else if (r.getObject().getObjectType() == 1) {
-			if (r.getFilterType1Operator().equals(">") && (Float) ((Literal) (r.getObject().getValue()))
-					.getValue() < (Float) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			if (r.getFilterType1Operator().equals(">") && (Float) ((r.getObject().getValue())) < (Float) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<") && (Float) ((Literal) (r.getObject().getValue()))
-					.getValue() > (Float) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			} else if (r.getFilterType1Operator().equals("<") && (Float) ((r.getObject().getValue())) > (Float) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<=") && (Float) ((Literal) (r.getObject().getValue()))
-					.getValue() >= (Float) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			} else if (r.getFilterType1Operator().equals("<=") && (Float) ((r.getObject().getValue())) >= (Float) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
 
-			} else if (r.getFilterType1Operator().equals(">=") && (Float) ((Literal) (r.getObject().getValue()))
-					.getValue() <= (Float) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			} else if (r.getFilterType1Operator().equals(">=") && (Float) ((r.getObject().getValue())) <= (Float) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
 			}
 
@@ -295,33 +294,29 @@ public class GraphPruning implements GraphPruningAPI {
 				return false;
 			}
 
-			if (r.getFilterType1Operator().equals(">")
-					&& (Double) ((Literal) (r.getObject().getValue())).getValue() < aDouble) {
+			if (r.getFilterType1Operator().equals(">") && (Double) ((r.getObject().getValue())) < aDouble) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<")
-					&& (Double) ((Literal) (r.getObject().getValue())).getValue() > aDouble) {
+			} else if (r.getFilterType1Operator().equals("<") && (Double) ((r.getObject().getValue())) > aDouble) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<=")
-					&& (Double) ((Literal) (r.getObject().getValue())).getValue() >= aDouble) {
+			} else if (r.getFilterType1Operator().equals("<=") && (Double) ((r.getObject().getValue())) >= aDouble) {
 				return true;
 
-			} else if (r.getFilterType1Operator().equals(">=")
-					&& (Double) ((Literal) (r.getObject().getValue())).getValue() <= aDouble) {
+			} else if (r.getFilterType1Operator().equals(">=") && (Double) ((r.getObject().getValue())) <= aDouble) {
 				return true;
 			}
 		} else if (r.getObject().getObjectType() == 6) {
-			if (r.getFilterType1Operator().equals(">") && (Long) ((Literal) (r.getObject().getValue()))
-					.getValue() < (Long) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			if (r.getFilterType1Operator().equals(">") && (Long) ((r.getObject().getValue())) < (Long) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<") && (Double) ((Literal) (r.getObject().getValue()))
-					.getValue() > (Long) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			} else if (r.getFilterType1Operator().equals("<") && (Double) ((r.getObject().getValue())) > (Long) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
-			} else if (r.getFilterType1Operator().equals("<=") && (Double) ((Literal) (r.getObject().getValue()))
-					.getValue() >= (Long) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			} else if (r.getFilterType1Operator().equals("<=") && (Double) ((r.getObject().getValue())) >= (Long) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
 
-			} else if (r.getFilterType1Operator().equals(">=") && (Double) ((Literal) (r.getObject().getValue()))
-					.getValue() <= (Long) (dic.getLiteralAdaptive(e.getObject()).getValue())) {
+			} else if (r.getFilterType1Operator().equals(">=") && (Double) ((r.getObject().getValue())) <= (Long) (dic
+					.getLiteralAdaptive(e.getObject()).getValue())) {
 				return true;
 			}
 		}

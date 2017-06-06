@@ -194,21 +194,22 @@ public class StreamManager implements Runnable {
 			while (readers[i].hasNext() && graphsize > 0) {
 				nxx = readers[i].next();
 				// System.out.println(nxx);
-				graphsize--;
 
 				mapE[counterI] = new MappedEvent(nxx, dicImpl);
 				// System.out.println(" internal "+counterI);
-				counterI++;
-				if (!this.systemTime && graphsize == 1) {
-					nxx = readers[i].next();
-					// System.out.println(nxx);
-					graphsize--;
 
-					mapE[counterI] = new MappedEvent(nxx, dicImpl);
+				if (!this.systemTime && graphsize == 1) {
+					// nxx = readers[i].next();
+					// System.out.println(nxx);
+					// graphsize--;
+
+					// mapE[counterI] = new MappedEvent(nxx, dicImpl);
 					// System.out.println(" internal "+counterI);
-					counterI++;
+					// counterI++;
 					return new GraphEvent(1, Long.parseLong((String) ((Literal) nxx[2]).getValue()), dicImpl, id, mapE);
 				}
+				graphsize--;
+				counterI++;
 			}
 			return new GraphEvent(1, (System.nanoTime() - this.START_OF_THE_STREAM), dicImpl, id, mapE);
 		} else {

@@ -48,26 +48,9 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 	protected final DictionaryOpImpl _dictImpl;
 	protected final ResultDecoder results;
 
-	/**
-	 * RDF Based Event Buffer // Can use a single one or set of buffers
-	 * depending on states
-	 */
-	// private RDFEventBuffer rdfbuffer;
-
 	protected HashMap<Long, ArrayList<RunOptimised>> activeRunsByPartition;
 
 	protected final NFA nfa;
-
-	// private int _stgy;
-	// private HashMap<Integer, MultiBiMap<SP, OP> > cache;
-	/**
-	 * The run pool, which is used to reuse the run data structure.
-	 */
-	// protected final RunPool engineRunController;
-	/**
-	 * The active runs in memory
-	 */
-	// protected final ArrayList<RunOptimised> activeRuns;
 
 	/**
 	 * Active Runs partition by the stream ID
@@ -75,16 +58,12 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 
 	protected final MutableList<RunOptimised> streamPartitionedRuns;
 
-	protected final FastListMultimap<Long, RunOptimised> activeRunsPart; // =
-																			// FastListMultimap<Long,
-																			// RunOptimised>();
-	// private final HashBagMultimap<Long, RunOptimised> activeRunsPart = new
-	// HashBagMultimap<Long, RunOptimised>() ;
+	protected final FastListMultimap<Long, RunOptimised> activeRunsPart;
 
 	/**
 	 * The runs which can be removed from the active runs.
 	 */
-	protected final ArrayList<RunOptimised> toDeleteRuns;
+
 	private Thread writingThread;
 
 	protected ConstrcutCaluse constFunc;
@@ -122,11 +101,6 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 		if (this.constClause != null) {
 			constFunc = new ConstrcutCaluse(constClause, resultqueue);
 		}
-		// engineRunController = new RunPool();
-		// / cache = new ArrayList<>();
-		// buffer = new EventBuffer();
-		// this.cache=new HashMap();
-		// this.activeRuns = new ArrayList<RunOptimised>();
 
 		/**
 		 * Partition runs by the stream ID
@@ -140,7 +114,7 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 				resultSet);
 
 		this.activeRunsByPartition = new HashMap<Long, ArrayList<RunOptimised>>();
-		this.toDeleteRuns = new ArrayList<RunOptimised>();
+
 		initialiseWriter();
 	}
 
@@ -204,7 +178,7 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 					event = this.queue.take();
 
 					if (event.getId() != -1) {
-						// this.runGraphEventProcessing(event);
+
 						streamPartitionedEngine(event);
 					} else {
 
@@ -252,6 +226,8 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 		// logger.info("Finsed Writing Results...");
 		// Decrease latch count
 		latch.countDown();
+
+		System.out.println("The Results are stored at ./result/queryResults.txt");
 		System.out.println("Query Processing Completed");
 	}
 

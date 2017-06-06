@@ -316,6 +316,10 @@ public class RunOptimised implements Cloneable {
 		}
 	}
 
+	public boolean checkNextState() {
+		return this.currentState == this.size - 1;
+	}
+
 	/**
 	 * Clones the run itself
 	 */

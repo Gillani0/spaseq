@@ -136,19 +136,18 @@ public class Filter {
 		} else if (s.contains("^^")) { // if contains the data type then use the
 										// datatype, otherwise consider it as a
 										// string
-			String[] ss = s.split("\\^");
+			// String[] ss = s.split("\\^");
 			/// first element is the data send it for the literal creation
 			// second is useless and third is the datatype
-			ss[0] = ss[0].replaceAll("'", "");
-			Literal nL // = new Literal(ss[0]);
-
-					= new Literal(s, true, map);
+			// ss[0] = ss[0].replaceAll("'", "");
+			Literal nL = new Literal(s, true, map);
 			// System.out.println("here");
 			// nL.setType(4);
-			this.checkDataType(ss[2], nL, ss[0]);
+			// this.checkDataType(ss[2], nL, ss[0]);
 			this.filterDataType = nL.getType();
 			this.filterMappedValue = this.dictImplOp.addLiteralPersistant(nL);
-			this.filterValue = nL;
+			// this.filterValue = nL;
+			parseData(nL.getType(), nL);
 			return true;
 		} else {
 			try {
@@ -156,6 +155,7 @@ public class Filter {
 				this.filterDataType = nL.getType();
 				this.filterMappedValue = this.dictImplOp.addLiteralPersistant(nL);
 				this.filterValue = nL;
+				parseData(nL.getType(), nL);
 			} catch (Exception ex) {
 				System.out.println(
 						"Unable to parse the Filter caluse in the query, please check if the data type is given such as 'Filter(?x > '2'^^xsd:integer)'");
@@ -165,6 +165,33 @@ public class Filter {
 			// this.checkDataType(s, nL);
 
 			return false;
+		}
+
+	}
+
+	private void parseData(int datatype, Literal L) {
+
+		if (datatype == 0) {
+			final int oInteger;
+
+			/// convert it to Integer
+			try {
+				oInteger = Integer.parseInt(L.getValue().toString());
+				this.filterValue = oInteger;
+
+			} catch (Exception ex) {
+				System.out.println("Cannot parse the integer in the Filter Clause");
+			}
+		} else if (datatype == 4) {
+			final double aDouble;
+			try {
+				aDouble = Double.parseDouble(L.getValue().toString());
+				this.filterValue = aDouble;
+				// L.setValue(aDouble);
+
+			} catch (Exception ex) {
+				System.out.println("Cannot parse the double in the Filter Clause");
+			}
 		}
 
 	}

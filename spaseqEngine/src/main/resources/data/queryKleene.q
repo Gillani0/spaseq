@@ -1,11 +1,11 @@
  prefix c: <http://example/company#> 
 prefix pred: <http://example/>
-SELECT ?company ?vol1 ?p3 ?p1 ?p2 ?vol3 ?vol2
- WITHIN 10 SECONDS 
+SELECT ?company ?p3 ?p1 ?p2
+ WITHIN 100 SECONDS 
 FROM STREAM S1 <http://example.org/main> 
                
 WHERE 
-SEQ (A, B+, C)
+SEQ (A; B+; C)
                            {
        DEFINE GPM A ON S1
                  { 

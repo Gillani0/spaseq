@@ -402,7 +402,8 @@ public class ResultDecoder {
 			// "] ";
 			// }
 
-			this.resultqueue.add("  [" + timestmap + "," + r.getLifeTimeBegin() + "] \n ");
+			// this.resultqueue.add(" [" + timestmap + "," +
+			// r.getLifeTimeBegin() + "] \n ");
 
 		}
 

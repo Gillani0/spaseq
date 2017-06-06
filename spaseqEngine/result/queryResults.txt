@@ -1,0 +1,8 @@
+?company http://example/company#eBay
+
+?p1 14.0
+
+?p4 18.0
+
+[1695000,2109000]
+

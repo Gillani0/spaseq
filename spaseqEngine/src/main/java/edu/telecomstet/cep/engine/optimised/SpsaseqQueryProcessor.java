@@ -36,11 +36,6 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	protected void partitionBYEngine(GraphEvent e) throws CloneNotSupportedException, Exception {
 		evaluateRunsForPartitionContiguity(e);
 
-		// if (this.toDeleteRuns.size() > 0) { /// do something about the
-		// /// toDeleteRuns, concurrent
-		// /// modifications can be avoided now
-		// this.cleanRunsByPartition();
-		// }
 		createNewRunByPartition(e);
 
 		Profiling.numberOfEvents += 1;
@@ -77,7 +72,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				switch (ConfigFlags.selectionStrategy) // 1: STN, 2: STA, 3: SC
 				{
 				case 1:
-					this.evaluateFBOptimised(e, r);
+					this.evaluateFB(e, r);
 					break;
 				case 2:
 					// this.evaluateSTA(e, r);
@@ -107,7 +102,61 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		return key;
 	}
 
-	private void optimisedIF(GraphEvent e, RunOptimised r) {
+	private void optimisedIF(GraphEvent e, RunOptimised r) throws Exception {
+
+		if (!checkTimeWindow(e, r)) {
+			if (ConfigFlags.partitionByPred.isEmpty())
+				clearTheRunFromRunList(r);
+			else
+
+				clearThePartitionedRun(r);
+
+			return;
+		}
+
+		int result = processEvent(e, r); /// over here it matches the kleene+
+											/// state
+
+		if (result == 1) { // the predicate if ok.
+
+			final int oldState = r.getCurrentState();
+			r.addGraphEvent(e); // add the event to this run
+			final int newState = r.getCurrentState();
+
+			if (oldState == newState) {
+
+				if (r.isFull()) {
+
+					results.outputMatches(e, r);
+					Profiling.numberOfMatches++;
+
+					// TODO: proper function
+					if (ConfigFlags.partitionByPred.isEmpty())
+						clearTheRunFromRunList(r);
+					else
+
+						clearThePartitionedRun(r);
+
+					// this.toDeleteRuns.add(r);
+
+				} else {
+
+					// for kleene+state
+					RunOptimised newerRun = this.cloneRun(r);
+
+					r.setKleeneClosureInitialized(false);
+					if (ConfigFlags.partitionByPred.isEmpty())
+						addRunNormal(newerRun);
+					else
+						addRunByPartition(newerRun);
+
+				}
+			}
+
+			/// now the matched kleene+ is initialsed
+		} else if (result == 0) {
+			System.out.println("0 results");
+		}
 
 	}
 
@@ -121,96 +170,9 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 	private void evaluateIF(GraphEvent e, RunOptimised r) throws CloneNotSupportedException, Exception {
 
-		if (this.checkTimeWindow(e, r)) {
+		if (!checkTimeWindow(e, r)) {
 
-			int result = processEvent(e, r);
-			if (result == 1) { // the predicate if ok.
-
-				final int oldState = r.getCurrentState();
-				r.addGraphEvent(e); // add the event to this run
-				final int newState = r.getCurrentState();
-
-				if (oldState == newState) {
-
-					if (r.isFull()) {
-
-						results.outputMatches(e, r);
-						Profiling.numberOfMatches++;
-
-						// TODO: proper function
-						if (ConfigFlags.partitionByPred.isEmpty())
-							clearTheRunFromRunList(r);
-						else
-
-							clearThePartitionedRun(r);
-
-						// this.toDeleteRuns.add(r);
-
-					} else {
-
-						// Check the Kleene-+ state
-						if (r.checkStateType(e)) {
-							RunOptimised newerRun = this.cloneRun(r);
-
-							// newerRun.proceed(); // / Addition for the RDF
-							// / Matching
-							if (newerRun.isComplete()) {
-
-								results.outputMatches(e, newerRun);
-								Profiling.numberOfMatches++;
-								if (ConfigFlags.partitionByPred.isEmpty())
-									clearTheRunFromRunList(newerRun);
-								else
-									clearThePartitionedRun(newerRun);
-								// this.toDeleteRuns.add(newerRun);
-							} else {
-
-								if (ConfigFlags.partitionByPred.isEmpty())
-									addRunNormal(newerRun);
-								else
-									addRunByPartition(newerRun);
-							}
-
-						}
-					}
-				} else {
-					/**
-					 * change the partition of the Run, only if you're using the
-					 * activeRunPar structure Use the older State to get the
-					 * event Type and remove it from the map, and use the new
-					 * state to put it back in the map
-					 */
-
-					Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
-
-					for (long ls : oldsID) {
-						this.activeRunsPart.remove(ls, r);
-
-					}
-
-					Set<Long> newsID = this.nfa.getStates()[newState].getEvetType();
-
-					for (long ns : newsID) {
-						this.activeRunsPart.put(ns, r);
-
-					}
-
-				}
-
-			} else if (result <= 0) {
-
-				if (ConfigFlags.partitionByPred.isEmpty())
-					clearTheRunFromRunList(r);
-				else
-
-					clearThePartitionedRun(r);
-				// this.toDeleteRuns.add(r);
-
-			}
-
-		} else {
-
-			// /new to use the older state over here
+			// new to use the older state over here
 			// this.toDeleteRuns.add(r);
 
 			if (ConfigFlags.partitionByPred.isEmpty())
@@ -218,22 +180,90 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			else
 
 				clearThePartitionedRun(r);
+
+			return;
+
 		}
-	}
 
-	private int optimisedEventProcessing(GraphEvent e, RunOptimised r) throws Exception {
-		State s = this.nfa.getStates(r.getCurrentState());
+		int result = processEvent(e, r);
+		if (result == 1) { // the predicate if ok.
 
-		if (!s.isNegation() && !s.isOptional() && !s.isManager() && !s.isKleeneClosure()) {
-			if (checkRDFPredicate(e, r))
-				return 1;
+			final int oldState = r.getCurrentState();
+			r.addGraphEvent(e); // add the event to this run
+			final int newState = r.getCurrentState();
 
+			if (oldState == newState) {
+
+				if (r.isFull()) {
+
+					results.outputMatches(e, r);
+					Profiling.numberOfMatches++;
+
+					if (ConfigFlags.partitionByPred.isEmpty())
+						clearTheRunFromRunList(r);
+					else
+
+						clearThePartitionedRun(r);
+
+					// this.toDeleteRuns.add(r);
+
+				} else {
+
+					// for kleene+state
+					RunOptimised newerRun = this.cloneRun(r);
+
+					r.setKleeneClosureInitialized(false);
+
+					// check if the newerRun is at the last state or not
+					if (newerRun.checkNextState()) {
+						newerRun.setFull(true);
+						results.outputMatches(e, r);
+						Profiling.numberOfMatches++;
+						newerRun = null;
+						return;
+					}
+
+					if (ConfigFlags.partitionByPred.isEmpty())
+						addRunNormal(newerRun);
+					else
+						addRunByPartition(newerRun);
+
+				}
+			} else {
+				/**
+				 * change the partition of the Run, only if you're using the
+				 * activeRunPar structure Use the older State to get the event
+				 * Type and remove it from the map, and use the new state to put
+				 * it back in the map
+				 */
+
+				Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
+
+				for (long ls : oldsID) {
+					this.activeRunsPart.remove(ls, r);
+
+				}
+
+				Set<Long> newsID = this.nfa.getStates()[newState].getEvetType();
+
+				for (long ns : newsID) {
+					this.activeRunsPart.put(ns, r);
+
+				}
+
+			}
+
+		} else if (result == 0) {
+
+			if (ConfigFlags.partitionByPred.isEmpty())
+				clearTheRunFromRunList(r);
 			else
-				return 0;
+
+				clearThePartitionedRun(r);
+			// this.toDeleteRuns.add(r);
 
 		}
 
-		return 0;
 	}
 
 	/**
@@ -259,6 +289,28 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		/// if its after negation then only create one run and thats it.....
 
 		// && !s.isKleeneClosure()
+
+		if (r.isKleeneClosureInitialized() && s.isKleeneClosure()) {
+
+			/// check the next state of the r
+			if (r.checkNextState()) {
+				r.setFull(true);
+				return 1;
+			}
+
+			r.setCurrentState(r.getCurrentState() + 1);
+
+			if (checkRDFPredicate(e, r)) {
+				return 1;
+			} else {
+				r.setCurrentState(r.getCurrentState() - 1);
+
+				return 5;
+			}
+
+			/// else compare with the next state
+
+		}
 
 		if (!s.isNegation() && !s.isOptional() && !s.isManager()) { /// Simple
 			/// State or
@@ -351,8 +403,6 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			} else if (s.getSubstatesType() == 1) {
 				return evaluateAND(e, r, s);
 			}
-		} else if (s.isKleeneClosure()) {
-			//////
 		}
 
 		return 0;
@@ -469,127 +519,8 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		return 0;
 	}
 
-	private void evaluateFBOptimised(GraphEvent e, RunOptimised r) throws CloneNotSupportedException, Exception {
-		if (this.checkTimeWindow(e, r)) {
-
-			int result = processEvent(e, r);
-			if (result == 1) { // the predicate if ok.
-
-				final int oldState = r.getCurrentState();
-				r.addGraphEvent(e);
-				// final int newState = r.getCurrentState();
-				if (oldState == r.getCurrentState()) {
-
-					//
-					if (r.isFull()) {
-
-						results.outputMatches(e, r);
-						Profiling.numberOfMatches++;
-						if (ConfigFlags.partitionByPred.isEmpty())
-							clearTheRunFromRunList(r);
-						else
-
-							clearThePartitionedRun(r);
-						// this.toDeleteRuns.add(r);
-						// }
-					} else {
-
-						// put the run in the active run list, instead of going
-						// Kleene-+ State Check
-						// if (r.checkStateType(e)) {
-						// RunOptimised newerRun = this.cloneRun(r);
-						// // this.activeRuns.add(r);
-						// newerRun.proceed();
-						// if (newerRun.isComplete()) { // is full?
-						//
-						// results.outputMatches(e, newerRun);
-						// Profiling.numberOfMatches++;
-						// if (ConfigFlags.partitionByPred.isEmpty())
-						// clearTheRunFromRunList(newerRun);
-						// else
-						//
-						// clearThePartitionedRun(newerRun);
-						// // this.toDeleteRuns.add(newerRun);
-						// } else {
-						//
-						// if (ConfigFlags.partitionByPred.isEmpty())
-						// addRunNormal(newerRun);
-						// else
-						// addRunByPartition(newerRun);
-						//
-						// }
-						//
-						//
-						//
-						// } // /For kleene-+ state
-
-						/**
-						 * New Stuff
-						 */
-
-						if (r.checkStateType(e)) {
-							RunOptimised newerRun2 = this.cloneRun(r);
-
-							if (ConfigFlags.partitionByPred.isEmpty())
-								addRunNormal(newerRun2);
-							else
-								addRunByPartition(newerRun2);
-
-							r.proceed();
-
-							if (r.isComplete()) { // is full?
-
-								results.outputMatches(e, r);
-								Profiling.numberOfMatches++;
-								if (ConfigFlags.partitionByPred.isEmpty())
-									clearTheRunFromRunList(r);
-								else
-
-									clearThePartitionedRun(r); //
-								// this.toDeleteRuns.add(newerRun);
-							}
-
-						}
-
-					}
-				} else { // /change the partition of the Run, only if you're
-							// using the activeRunPar structure
-							// Use the older State to get the event Type and
-							// remove it from the map, and use the new
-							// state to put it back in the map
-
-					Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
-
-					for (long ls : oldsID) {
-						this.activeRunsPart.remove(ls, r);
-
-					}
-					/// newRuns replaced
-					Set<Long> newsID = this.nfa.getStates()[r.getCurrentState()].getEvetType();
-
-					for (long ns : newsID) {
-						this.activeRunsPart.put(ns, r);
-
-					}
-
-				}
-
-			} else if (result == 0) {
-
-				State s = this.nfa.getStates(r.getCurrentState());
-
-				if (s.isManager()) {
-					if (ConfigFlags.partitionByPred.isEmpty())
-						clearTheRunFromRunList(r);
-					else
-
-						clearThePartitionedRun(r);
-					// this.toDeleteRuns.add(r);
-				}
-
-			}
-
-		} else {
+	private void evaluateFB(GraphEvent e, RunOptimised r) throws CloneNotSupportedException, Exception {
+		if (!checkTimeWindow(e, r)) {
 
 			if (ConfigFlags.partitionByPred.isEmpty())
 				clearTheRunFromRunList(r);
@@ -597,7 +528,88 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 				clearThePartitionedRun(r);
 			// this.toDeleteRuns.add(r);
-			// / if the window is not good anymoreelse{
+			// / if the window is not good anymore
+
+			return;
+
+		}
+
+		int result = processEvent(e, r);
+		if (result == 1) { // the predicate if ok.
+
+			final int oldState = r.getCurrentState();
+			r.addGraphEvent(e);
+			// final int newState = r.getCurrentState();
+			if (oldState == r.getCurrentState()) {
+
+				//
+				if (r.isFull()) {
+
+					results.outputMatches(e, r);
+					Profiling.numberOfMatches++;
+					if (ConfigFlags.partitionByPred.isEmpty())
+						clearTheRunFromRunList(r);
+					else
+
+						clearThePartitionedRun(r);
+					// this.toDeleteRuns.add(r);
+					// }
+				} else {
+
+					// for kleene+state
+					RunOptimised newerRun = this.cloneRun(r);
+
+					r.setKleeneClosureInitialized(false);
+
+					// check if the newerRun is at the last state or not
+					if (newerRun.checkNextState()) {
+						newerRun.setFull(true);
+						results.outputMatches(e, r);
+						Profiling.numberOfMatches++;
+						return;
+					}
+
+					if (ConfigFlags.partitionByPred.isEmpty())
+						addRunNormal(newerRun);
+					else
+						addRunByPartition(newerRun);
+
+				}
+			} else { // /change the partition of the Run, only if you're
+						// using the activeRunPar structure
+						// Use the older State to get the event Type and
+						// remove it from the map, and use the new
+						// state to put it back in the map
+
+				Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
+
+				for (long ls : oldsID) {
+					this.activeRunsPart.remove(ls, r);
+
+				}
+				/// newRuns replaced
+				Set<Long> newsID = this.nfa.getStates()[r.getCurrentState()].getEvetType();
+
+				for (long ns : newsID) {
+					this.activeRunsPart.put(ns, r);
+
+				}
+
+			}
+
+		} else if (result == 0) {
+
+			State s = this.nfa.getStates(r.getCurrentState());
+
+			if (s.isManager()) {
+				if (ConfigFlags.partitionByPred.isEmpty())
+					clearTheRunFromRunList(r);
+				else
+
+					clearThePartitionedRun(r);
+				// this.toDeleteRuns.add(r);
+			}
+
 		}
 
 	}
@@ -614,14 +626,10 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	private RunOptimised cloneRun(RunOptimised r) throws CloneNotSupportedException {
 		RunOptimised newRun = new RunOptimised();
 
-		// TODO: here edit the clone for kleene+
-
 		newRun = (RunOptimised) r.clone(++runCounter);
 
 		handleDataforKleene(newRun.getId(), r.getCurrentState(), r.getId());
-		/// get the data of r and use it in newRun
 
-		// System.out.println(newRun.getId());
 		Profiling.numberOfRuns++;
 		return newRun;
 	}
@@ -687,7 +695,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	 * @throws InterruptedException
 	 */
 
-	public boolean checkTimeWindow(GraphEvent e, RunOptimised r) throws InterruptedException {
+	private boolean checkTimeWindow(GraphEvent e, RunOptimised r) throws InterruptedException {
 
 		/// First compare the timestamp of the newly arrived event and the
 		/// window, if its greater than window, then move the window tumbling
@@ -705,39 +713,13 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	/**
 	 * Cleans useless runs by partition.
 	 */
-	// public void cleanRunsByPartition() {
-	//
-	// int size = this.toDeleteRuns.size();
-	// RunOptimised tempRun = null;
-	// ArrayList<RunOptimised> partitionedRuns = null;
-	// for (int i = 0; i < size; i++) {
-	// tempRun = toDeleteRuns.get(0);
-	//
-	// tempRun.resetRun();
-	//
-	// removeFromCache(tempRun.getId());
-	// // TODO: change the active runs, they are not really used
-	// // this.activeRuns.remove(tempRun);
-	// this.toDeleteRuns.remove(0);
-	// Profiling.numberOfRunsCutted++;
-	// partitionedRuns =
-	// this.activeRunsByPartition.get(tempRun.getPartitonId());
-	// partitionedRuns.remove(tempRun);
-	// if (partitionedRuns.size() == 0) {
-	// this.activeRunsByPartition.remove(partitionedRuns);
-	// }
-	//
-	// }
-	//
-	// }
 
 	private void clearThePartitionedRun(RunOptimised tempRun) {
 		removeFromCache(tempRun.getId());
 		ArrayList<RunOptimised> partitionedRuns = null;
 
 		partitionedRuns = this.activeRunsByPartition.get(tempRun.getPartitonId());
-		// TODO: Can increase the processing speed by using a hashmap instead of
-		// an array list
+
 		partitionedRuns.remove(tempRun);
 		if (partitionedRuns.size() == 0) {
 			this.activeRunsByPartition.remove(partitionedRuns);
@@ -905,60 +887,18 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	@Override
 	protected void streamPartitionedEngine(GraphEvent e) throws CloneNotSupportedException, Exception {
 
-		test++;
-		System.out.println(test);
-		if (test == 4) {
-			System.out.println();
-		}
-
 		evaluateRunsForStreamPartition(e);
 
-		// if (this.toDeleteRuns.size() > 0) {
-		// this.cleanRunsForStreamPartition();
-		// }
 		this.createNewRunForStreamPartition(e);
 
-		// ////////
-
-		// Profiling.totalRunTime += (System.nanoTime() - currentTime);
 		Profiling.numberOfEvents += 1;
-
-	}
-
-	private void cleanRunsForStreamPartition() {
-		int size = this.toDeleteRuns.size();
-		RunOptimised tempRun = null;
-		for (int i = 0; i < size; i++) {
-			tempRun = toDeleteRuns.get(0);
-			// Profiling.totalRunLifeTime += (System.nanoTime() -
-			// tempRun.getLifeTimeBegin());
-			Set<Long> sIds = this.nfa.getStates()[tempRun.getCurrentState()].getEvetType();
-			if (tempRun.getClone() == 0) {
-				this.removeFromCache(tempRun.getId());
-
-			}
-
-			// this.activeRuns.remove(tempRun);
-
-			for (Long id : sIds) {
-				activeRunsPart.remove(id, tempRun);
-			}
-
-			tempRun.resetRun();
-
-			this.toDeleteRuns.remove(0);
-			Profiling.numberOfRunsCutted++;
-		}
 
 	}
 
 	private void clearTheRunFromRunList(RunOptimised r) {
 		Set<Long> sIds = this.nfa.getStates()[r.getCurrentState()].getEvetType();
 
-		// if (r.getClone() == 0) {
 		this.removeFromCache(r.getId());
-
-		// }
 
 		for (Long id : sIds) {
 			activeRunsPart.remove(id, r);
@@ -975,20 +915,9 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			streamPartitionedRuns.clear();
 			streamPartitionedRuns.addAll(activeRunsPart.get(e.getMappedContext()));
 
-			// MutableList<RunOptimised> partitionedRuns =
-			// this.activeRunsPart.get(e.getMappedContext());
-
-			// MutableBag<RunOptimised> partitionedRuns =
-			// this.activeRunsPart.get(e.getMappedContext());
-			// Iterator it= partitionedRuns.iterator();
-			//
-			// while(it.hasNext()){
-			// RunOptimised r = (RunOptimised) it.next();
-			// }
-
 			for (int i = 0; i < streamPartitionedRuns.size(); i++) {
 				RunOptimised r = streamPartitionedRuns.get(i);
-				// RunOptimised r = partitionedRuns.get(i);
+
 				if (r.isFull()) {
 					continue;
 				}
@@ -996,10 +925,11 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				switch (ConfigFlags.selectionStrategy) // 1: STN, 2: STA, 3: SC
 				{
 				case 1:
-					this.evaluateFBOptimised(e, r);
+					this.evaluateFB(e, r);
 					break;
 
 				case 3:
+
 					this.evaluateIF(e, r);
 					break;
 

@@ -7,7 +7,7 @@
                         prefix env: <http://www.smart.com/environmental#>
                        
 
-                        SELECT ?house1 ?p1  
+                        SELECT ?house1 ?p1 ?p2 ?v
                          WITHIN 1 SECONDS 
                        
                  FROM STREAM S1 <http://www.smart.com/power> 
@@ -34,7 +34,7 @@
                            ?wthr env:hasvalue ?v.
                            ?v val:windspeed ?wsped. 
                             ?v val:heatindex ?heat. 
-                           Filter (?wsped >= '1'^^xsd:integer && ?heat >= '7.0'^^xsd:double)
+                           Filter (?wsped >= '1'^^<http://www.w3.org/2001/XMLSchema#integer> && ?heat >= '7.0'^^<http://www.w3.org/2001/XMLSchema#double>)
                          
                           
                              }
