@@ -95,7 +95,9 @@ public class ResultDecoder {
 				}
 
 				// return;
-			} else {
+			}
+
+			else {
 
 				for (int j = 0; j < workingState.getNfaData().getAutomta().getStates().size(); j++) {
 

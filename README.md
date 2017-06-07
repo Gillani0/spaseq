@@ -23,8 +23,9 @@ Clone the porject on your local computer and open the maven project in your edit
 ```
 git clone https://github.com/Gillani0/spaseq.git
 cd spaseq-master
+mvn install
 ```
-After importing, you will have follwing five main project modules:
+After importing, you will have follwing five main project modules (Don't forget to run: mvn install):
 ```
 spaseqEngine, spaseqModels, spaseqQueyParser, streamparser
 ```
@@ -44,7 +45,7 @@ The main module in the spaseq project to look for is `spaseqEngine`, where in UI
 ```
 Usage: java -jar spaseq.jar [-s <STRING>] [-t <STRING>] [-q <STRING>] [-st <STRING>]
 -s,--streamfile <arg> Paths and prefixes of input stream files located in .stream file
--t, --timestamps <arg> Take the timestamps from the input files (NQuads): false, use the system timestamps: true
+-t, --timestamps <arg> Take the timestamps from the input files (in form of a triple): false, use the system timestamps: true
 -q,--query <arg> Input query file
 -st,--streamtype <arg> Stream type for multiple streams, true: for random generation of events, false: for sequential-based generation
 -kb,--knbase <arg> optional external KB file in N-Triples format 
@@ -60,7 +61,15 @@ The stream file (`-s` option) binds the location of the streams with the stream 
 ```
 Each line of the stream file is a triple, where the subject is the stream name used in the query, the predicate is the location of the stream file (on your computer) and object is the number of triples to be used from the input file within one single graph event. For instance, in the above stream file the power stream with name `<http://www.smart.com/power>` is located as `<../data/power.nt>` (N-Triples format) and for each event `5` triples will be used.
 #### Timestamps
-The timestamps option (`-t`) sets if the source or system timestamps have to be used. That is, if the input file is an NQuad format and contains the timestamps of the triples, then it uses them for the events. Otherwise, system timestamps are used for each event entering the system. 
+The timestamps option (`-t`) sets if the source or system timestamps have to be used. That is for `-t false`, if the input file is an N-Triple format and there are two triple for an event, then the third triple will be the timestamp of that event contains the timestamps of the triples, then it uses them for the events. For instance, the following N-Triples has two triples for an event and the thrid one for the timestamp. This configuration is usually used for the cojunction operator.
+
+```
+<http://example/company#Google> <http://example/volume> "29.83"^^<http://www.w3.org/2001/XMLSchema#double> .
+<http://example/company#Google> <http://example/price> "14.0"^^<http://www.w3.org/2001/XMLSchema#double> .
+<http://example/company#Google> <http://example/occursat> "10"^^<http://www.w3.org/2001/XMLSchema#date> .
+```
+The `-t true` option shows that the events are timestamps with the system time when they enter the SPAseq engine.
+
 
 #### Stream Type
 This stream type option (`-st`) is for testing multiple streams, where `true` means the events from the multiple stream files are selected randomly and sent to the engine, while the `false` means the events are sent in a sequential order where the ording is according to the defined ordering in the stream file. For instance, for the afromentioned stream file, if the options is `false`, then first a power stream event is parsed, then the environemnt stream event and then generation event: each one by one in a sequential order.

@@ -253,7 +253,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 			}
 
-		} else if (result == 0) {
+		} else if (result <= 0) {
 
 			if (ConfigFlags.partitionByPred.isEmpty())
 				clearTheRunFromRunList(r);
@@ -398,7 +398,8 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 		} else if (s.isManager()) {
 			//// send the e and r to a new function
-			if (s.getSubstatesType() == 2) { /// 1: for Union, and 2: for OR
+			if (s.getSubstatesType() == 2) { /// 2: disjunction, and 1: for
+												/// conjunction
 				return evaluateOR(e, r, s);
 			} else if (s.getSubstatesType() == 1) {
 				return evaluateAND(e, r, s);
@@ -433,6 +434,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				Edge beginEdge = st.getEdges(0);
 
 				if (beginEdge.evaluateGraphEvent(e, r, st, this._statefullcache, this._kbstatefullcache)) {
+					st.getStateStatus().add(r.getId());
 					return 1;
 				}
 			}
@@ -819,6 +821,13 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			// this.activeRuns.add(newRun);
 			this.addRunByPartition(newRun);
 
+		} else {
+
+			// Remove from the cache if the event doesn't match with the current
+			// state
+
+			removeFromCacheForFirstState(0, this.runCounter);
+
 		}
 
 	}
@@ -884,6 +893,35 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		}
 	}
 
+	private void removeFromManagerState(int id, int rID) {
+		State rmoveState = nfa.getStates()[id];
+
+		if (!rmoveState.isManager()) {
+			return;
+		}
+
+		// get the substates
+
+		for (State s : rmoveState.getSubstates().values()) {
+			if (s.getStateStatus().contains(rID)) {
+
+				for (int j = 0; j < s.getNfaData().getAutomta().getStates().size(); j++) {
+					this._statefullcache.remove(new RunStateMap(s.getOrder(), rID, j));
+				}
+
+				if (s.getNfaData().getAutomta().getContainsKB() == 1) {
+
+					this._kbstatefullcache.remove(new KBindex(rID, s.getOrder()));
+				}
+
+				rmoveState.get_timestampRuns().remove(rID);
+
+				s.getStateStatus().remove(rID);
+			}
+		}
+
+	}
+
 	@Override
 	protected void streamPartitionedEngine(GraphEvent e) throws CloneNotSupportedException, Exception {
 
@@ -903,6 +941,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		for (Long id : sIds) {
 			activeRunsPart.remove(id, r);
 		}
+
 		r = null;
 		Profiling.numberOfRunsCutted++;
 
