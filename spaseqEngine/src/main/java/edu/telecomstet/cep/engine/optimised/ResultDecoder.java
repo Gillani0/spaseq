@@ -16,13 +16,13 @@ import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
 import edu.telecom.stet.cep.events.GraphEvent;
-import edu.telecomst.graph.processing.ConstrcutCaluse;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpApi;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
 import edu.telecomstet.cep.knowledgebase.KBRule;
 import edu.telecomstet.cep.nfahelpers2.NFA;
 import edu.telecomstet.cep.nfahelpers2.State;
 import edu.telecomstet.cep.rulesmodel.Rule;
+import edu.telecomstet.graph.processing.ConstrcutCaluse;
 
 public class ResultDecoder {
 	private final ConstrcutCaluse constFunc;

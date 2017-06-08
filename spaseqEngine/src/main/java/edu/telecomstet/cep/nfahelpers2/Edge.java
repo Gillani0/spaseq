@@ -11,9 +11,9 @@ import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
 import edu.telecom.stet.cep.events.GraphEvent;
-import edu.telecomst.graph.processing.GraphPruning;
 import edu.telecomstet.cep.engine.optimised.RunOptimised;
 import edu.telecomstet.cep.rulesmodel.NFAData;
+import edu.telecomstet.graph.processing.GraphPruning;
 
 /**
  * This class represents an edge of an NFA.

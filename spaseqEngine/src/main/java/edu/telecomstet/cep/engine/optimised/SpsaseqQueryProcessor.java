@@ -300,13 +300,23 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 			r.setCurrentState(r.getCurrentState() + 1);
 
-			if (checkRDFPredicate(e, r)) {
+			int result = processEvent(e, r);
+
+			if (result == 1) {
 				return 1;
 			} else {
 				r.setCurrentState(r.getCurrentState() - 1);
 
 				return 5;
 			}
+
+			// if (checkRDFPredicate(e, r)) {
+			// return 1;
+			// } else {
+			// r.setCurrentState(r.getCurrentState() - 1);
+			//
+			// return 5;
+			// }
 
 			/// else compare with the next state
 
@@ -350,26 +360,30 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 															// also check the
 															// optional state
 															// stuff as well
-				boolean nextToNegation = checkRDFPredicate(e, r);
+				// boolean nextToNegation = checkRDFPredicate(e, r);
+				int result = processEvent(e, r);
+
+				if (result == 0) {
+					r.setCurrentState(r.getCurrentState() - 1);
+					return 0;
+				}
+
+				return result;
 
 				// check for the optional state next to a negation state
-				if (this.nfa.getStates(r.getCurrentState()).isOptional()) {
-					return 1;
-				}
-
-				if (nextToNegation == true) {
-					return 1; /// deal it in a normal way, if the next state is
-								/// the kleene+ then create a new run and vice
-								/// versa
-				} else {
-
-					/// if the next state is not matched then stay on the
-					/// current negation state, and use the normal method to
-					/// deal with the stuff
-					r.setCurrentState(r.getCurrentState() - 1);
-					return 1;
-				}
-
+				/*
+				 * if (this.nfa.getStates(r.getCurrentState()).isOptional()) {
+				 * return 1; }
+				 * 
+				 * if (nextToNegation == true) { return 1; /// deal it in a
+				 * normal way, if the next state is /// the kleene+ then create
+				 * a new run and vice /// versa } else {
+				 * 
+				 * /// if the next state is not matched then stay on the ///
+				 * current negation state, and use the normal method to /// deal
+				 * with the stuff r.setCurrentState(r.getCurrentState() - 1);
+				 * return 1; }
+				 */
 			}
 
 		} else if (s.isNegation() && s.isEnding() && !s.isManager()) { /// negation
@@ -391,10 +405,27 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		} else if (s.isOptional() && !s.isNegation() && !s.isManager()) {//// Optional
 																			//// state
 
-			checkRDFPredicate(e, r); /// match it even if its not matched just
-										/// send the true
+			; /// match it even if its not matched just
 
-			return 1;
+			if (checkRDFPredicate(e, r)) {
+				return 1;
+			} else { // compare event with the next state
+
+				r.setCurrentState(r.getCurrentState() + 1);
+
+				int result = processEvent(e, r);
+
+				if (result == 0) {
+					r.setCurrentState(r.getCurrentState() - 1);
+					return 1;
+				} else {
+					return result;
+
+				}
+
+			}
+
+			/// send the true
 
 		} else if (s.isManager()) {
 			//// send the e and r to a new function

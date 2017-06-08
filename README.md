@@ -119,7 +119,7 @@ This knowledge base option (`-kb`) takes an external knowledge base file (an N-T
 
 ## Running the tests
 
-A set of test data, queries and stream files are provided in the [Test folder](http://www.dropwizard.io/1.0.2/docs/) with a compressed [Jar file](http://www.dropwizard.io/1.0.2/docs/): if you do not want to download the whole code and would like to use a Jar file instead, use this folder. Its usage is as follows:
+A set of test data, queries and stream files are provided in the [Test folder](https://github.com/Gillani0/spaseq/tree/master/tests-jar) with a compressed [Jar file](https://github.com/Gillani0/spaseq/blob/master/tests-jar/spaseq.jar): if you do not want to download the whole code and would like to use a Jar file instead, use this folder. Its usage is as follows:
 
 
 ```
@@ -128,12 +128,12 @@ Usage: java -jar spaseq.jar [-s <STRING>] [-q <STRING>] [-st <String>] [-kb <Str
 For instance, the following command can used to test the multiquery processing: 
 
 ```
-java -jar spaseq.jar -s ./streamMulti -q queryMultiStream.q -st false 
+java -jar spaseq.jar -s multistreams/streamMulti.txt -q multistreams/queryMultiStream.q -st true -t true
 ```
 The following command can be used to test the `followed-by` operator
 
 ```
-java -jar spaseq.jar -s ./streamFB -q queryFB.q -st false 
+java -jar spaseq.jar -s followedby/streamFB.txt -q followedby/queryFB.q -st false -t true
 ```
 
 Note that the results of the queries are stored in the `result` folder in file `queryResults.txt`.

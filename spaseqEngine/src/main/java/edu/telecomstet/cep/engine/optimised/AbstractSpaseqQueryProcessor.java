@@ -20,12 +20,12 @@ import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
 import edu.telecom.stet.cep.events.GraphEvent;
-import edu.telecomst.graph.processing.ConstrcutCaluse;
 import edu.telecomstet.cep.UI.ResultWriter;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
 import edu.telecomstet.cep.nfahelpers2.NFA;
 import edu.telecomstet.cep.rulesmodel.NFAData;
 import edu.telecomstet.cep.rulesmodel.Rule;
+import edu.telecomstet.graph.processing.ConstrcutCaluse;
 import net.openhft.koloboke.collect.map.hash.HashObjObjMaps;
 
 public abstract class AbstractSpaseqQueryProcessor implements Runnable {
