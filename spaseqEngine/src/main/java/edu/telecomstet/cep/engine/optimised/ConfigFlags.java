@@ -71,10 +71,12 @@ public class ConfigFlags {
          * This is to store all the predicates of the partition by attribute
          * 
          */
-        public static HashMap<Long,String> partitionByPred=new HashMap<>();
+   public static HashMap<Long,String> partitionByPred=new HashMap<>();
 	
         
-        
+    public static long firstEvent;
+    
+    public static long lastEvent;
         
     public long getPartitionKey() {
         return partitionKey;

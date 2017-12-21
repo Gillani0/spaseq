@@ -31,25 +31,20 @@
 </repositories>
 	<dependencies>
 
-	<!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
+<!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
 <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-master</artifactId>
-            <version>4.3</version>
-            <type>jar</type>
-        </dependency>
+    <groupId>org.antlr</groupId>
+    <artifactId>antlr4-runtime</artifactId>
+    <version>4.3</version>
+</dependency>
+
 <dependency>
 
  <groupId>com.mycompany</groupId>
     <artifactId>spaseqModels</artifactId>
     <version>1.1-SNAPSHOT</version>
       </dependency>
-        <dependency>
-        <groupId>org.semanticweb.yars</groupId>
-	<artifactId>nxparser</artifactId>
-	<version>1.2.10</version>
         
-        </dependency>
         
          <dependency> 
     <groupId>com.mycompany</groupId>

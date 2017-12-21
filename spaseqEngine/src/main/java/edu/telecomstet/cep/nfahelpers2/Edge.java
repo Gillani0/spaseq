@@ -18,10 +18,9 @@ import edu.telecomstet.graph.processing.GraphPruning;
 /**
  * This class represents an edge of an NFA.
  * 
- * @author haopeng
  *
  */
-// edgetype = begin & price < 100
+
 public final class Edge {
 	/**
 	 * The original description in the nfa file

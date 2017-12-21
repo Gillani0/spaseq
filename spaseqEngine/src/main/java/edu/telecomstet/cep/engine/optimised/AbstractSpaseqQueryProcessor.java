@@ -9,7 +9,13 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.SystemUtils;
+
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import com.gs.collections.api.list.MutableList;
 import com.gs.collections.impl.list.mutable.FastList;
 import com.gs.collections.impl.multimap.list.FastListMultimap;
@@ -26,6 +32,7 @@ import edu.telecomstet.cep.nfahelpers2.NFA;
 import edu.telecomstet.cep.rulesmodel.NFAData;
 import edu.telecomstet.cep.rulesmodel.Rule;
 import edu.telecomstet.graph.processing.ConstrcutCaluse;
+import fr.ujm.curien.cep.inter.face.manager.StreamManager;
 import net.openhft.koloboke.collect.map.hash.HashObjObjMaps;
 
 public abstract class AbstractSpaseqQueryProcessor implements Runnable {
@@ -58,7 +65,14 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 
 	protected final MutableList<RunOptimised> streamPartitionedRuns;
 
-	protected final FastListMultimap<Long, RunOptimised> activeRunsPart;
+	//protected final FastListMultimap<Long, RunOptimised> activeRunsPart;
+	protected final SetMultimap<Long, RunOptimised> activeRunsPart;
+	
+	protected final SetMultimap<Long, RunOptimised> tobeRemoved;
+	
+	protected final SetMultimap<Long, RunOptimised> tobeAdded;
+	
+	List<RunOptimised> newRunsTobeAdded = new ArrayList<>();  
 
 	/**
 	 * The runs which can be removed from the active runs.
@@ -90,9 +104,12 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 
 		this._dictImpl = dic;
 
-		_kbstatefullcache = HashObjObjMaps.newMutableMap();
-		_statefullcache = HashObjObjMaps.newMutableMap();
-		activeRunsPart = new FastListMultimap<Long, RunOptimised>();
+		_kbstatefullcache = new HashMap<>();//HashObjObjMaps.newMutableMap();
+		_statefullcache = new HashMap<>();//HashObjObjMaps.newMutableMap();
+		activeRunsPart = HashMultimap.create();//new FastListMultimap<Long, RunOptimised>();
+		tobeRemoved = HashMultimap.create();
+		
+		tobeAdded = HashMultimap.create();
 		streamPartitionedRuns = FastList.newList();
 
 		this.resultqueue = new ArrayBlockingQueue<>(10000);
@@ -169,17 +186,21 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 			}
 
 		} else {
-
+			
+			int i=0;
+			Stopwatch stopwatch = Stopwatch.createStarted();
 			GraphEvent event = null;
 			;
 			for (;;) {
 
 				try {
 					event = this.queue.take();
+					Profiling.numberOfEvents++;
+					
 
 					if (event.getId() != -1) {
 
-						streamPartitionedEngine(event);
+				  streamPartitionedEngine(event);
 					} else {
 
 						break;
@@ -194,9 +215,11 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 				}
 
 			}
-
+			stopwatch.stop();
+			Profiling.totalRunTime= stopwatch.elapsed(TimeUnit.NANOSECONDS);
 		}
-
+		
+		
 		this.finish();
 
 	}
@@ -213,6 +236,8 @@ public abstract class AbstractSpaseqQueryProcessor implements Runnable {
 	protected void finish() {
 		// Notify finish time
 
+	Profiling.timeToParseRDF =	StreamManager.PARSINGTIME;
+		
 		Profiling.printProfiling();
 		// Send poison pill to QPWriter
 		this.resultqueue.add("DONE");

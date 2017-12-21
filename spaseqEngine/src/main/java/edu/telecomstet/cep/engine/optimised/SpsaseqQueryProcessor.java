@@ -2,10 +2,16 @@ package edu.telecomstet.cep.engine.optimised;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multiset.Entry;
 
 import edu.telecom.stet.cep.datastructure.KBindex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
@@ -26,11 +32,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 	}
 
-	// @Override
-	// public void runGraphEventProcessing(GraphEvent e) throws
-	// CloneNotSupportedException, Exception {
-	//
-	// }
+
 
 	@Override
 	protected void partitionBYEngine(GraphEvent e) throws CloneNotSupportedException, Exception {
@@ -38,7 +40,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 		createNewRunByPartition(e);
 
-		Profiling.numberOfEvents += 1;
+		//Profiling.numberOfEvents += 1;
 
 	}
 
@@ -72,13 +74,13 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				switch (ConfigFlags.selectionStrategy) // 1: STN, 2: STA, 3: SC
 				{
 				case 1:
-					this.evaluateFB(e, r);
+					this.evaluateFB(e, r,null);
 					break;
 				case 2:
 					// this.evaluateSTA(e, r);
 					break;
 				case 3:
-					this.evaluateIF(e, r);
+					this.evaluateIF(e, r,null);
 					break;
 
 				}
@@ -137,8 +139,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 						clearThePartitionedRun(r);
 
-					// this.toDeleteRuns.add(r);
-
+					
 				} else {
 
 					// for kleene+state
@@ -155,7 +156,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 			/// now the matched kleene+ is initialsed
 		} else if (result == 0) {
-			System.out.println("0 results");
+			//System.out.println("0 results");
 		}
 
 	}
@@ -168,18 +169,22 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	 * @throws CloneNotSupportedException
 	 */
 
-	private void evaluateIF(GraphEvent e, RunOptimised r) throws CloneNotSupportedException, Exception {
+	private void evaluateIF(GraphEvent e, RunOptimised r,Iterator<RunOptimised> it) throws CloneNotSupportedException, Exception {
 
 		if (!checkTimeWindow(e, r)) {
 
 			// new to use the older state over here
 			// this.toDeleteRuns.add(r);
 
-			if (ConfigFlags.partitionByPred.isEmpty())
+			if (ConfigFlags.partitionByPred.isEmpty()){
 				clearTheRunFromRunList(r);
-			else
+				it.remove();
+			}
+			else{
 
 				clearThePartitionedRun(r);
+				it.remove();	
+			}
 
 			return;
 
@@ -196,14 +201,18 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 				if (r.isFull()) {
 
-					results.outputMatches(e, r);
+					//results.outputMatches(e, r);
 					Profiling.numberOfMatches++;
 
-					if (ConfigFlags.partitionByPred.isEmpty())
+					if (ConfigFlags.partitionByPred.isEmpty()){
 						clearTheRunFromRunList(r);
+						it.remove();	
+					}
 					else
-
+					{
 						clearThePartitionedRun(r);
+						it.remove();	
+					}
 
 					// this.toDeleteRuns.add(r);
 
@@ -237,29 +246,42 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				 * it back in the map
 				 */
 
-				Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
-
-				for (long ls : oldsID) {
-					this.activeRunsPart.remove(ls, r);
-
-				}
-
-				Set<Long> newsID = this.nfa.getStates()[newState].getEvetType();
-
-				for (long ns : newsID) {
-					this.activeRunsPart.put(ns, r);
-
-				}
+				 long keynew =  this.nfa.getStates()[r.getCurrentState()].getEvetType().iterator().next();
+					if( this.nfa.getStates()[oldState].getEvetType().iterator().next() != keynew){
+						
+						r.key=keynew;
+		                newRunsTobeAdded.add(r);
+					}
+				
+//				Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
+//
+//				for (long ls : oldsID) {
+//					this.activeRunsPart.remove(ls, r);
+//
+//				}
+//
+//				Set<Long> newsID = this.nfa.getStates()[newState].getEvetType();
+//
+//				for (long ns : newsID) {
+//					this.activeRunsPart.put(ns, r);
+//
+//				}
 
 			}
 
 		} else if (result <= 0) {
 
-			if (ConfigFlags.partitionByPred.isEmpty())
+			if (ConfigFlags.partitionByPred.isEmpty()){
 				clearTheRunFromRunList(r);
-			else
+				it.remove();
+				
+			}
+			else{
 
 				clearThePartitionedRun(r);
+				it.remove();
+				
+			}
 			// this.toDeleteRuns.add(r);
 
 		}
@@ -333,14 +355,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			} else {
 				return 0;
 			}
-		} else if (s.isNegation() && !s.isEnding() && !s.isManager()) { /// Negation
-																		/// state,
-																		/// which
-																		/// is
-																		/// not
-																		/// the
-																		/// final
-																		/// stae
+		} else if (s.isNegation() && !s.isEnding() && !s.isManager()) { 
 
 			/*
 			 * Check first the match with the current state, if the match is
@@ -552,41 +567,61 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		return 0;
 	}
 
-	private void evaluateFB(GraphEvent e, RunOptimised r) throws CloneNotSupportedException, Exception {
+	private void evaluateFB(GraphEvent e, RunOptimised r,Iterator<RunOptimised> it) throws CloneNotSupportedException, Exception {
+		
+		
+		/**
+		 * If outside ot inside the window
+		 */
 		if (!checkTimeWindow(e, r)) {
 
-			if (ConfigFlags.partitionByPred.isEmpty())
+			if (ConfigFlags.partitionByPred.isEmpty()){
+				
 				clearTheRunFromRunList(r);
+				it.remove();
+			}
 			else
-
+			{
 				clearThePartitionedRun(r);
+				it.remove();	
+			}
 			// this.toDeleteRuns.add(r);
 			// / if the window is not good anymore
 
 			return;
 
 		}
-
+		/**
+		 * If the GPM is matched
+		 */
+		//long ts = System.nanoTime();
+		//Stopwatch stopwatch = Stopwatch.createStarted();
 		int result = processEvent(e, r);
-		if (result == 1) { // the predicate if ok.
+		//stopwatch.stop();
+		//Profiling.timeforGPM+=stopwatch.elapsed(TimeUnit.NANOSECONDS);
+		
+		if (result == 1) { 
 
 			final int oldState = r.getCurrentState();
 			r.addGraphEvent(e);
-			// final int newState = r.getCurrentState();
+		
 			if (oldState == r.getCurrentState()) {
 
 				//
 				if (r.isFull()) {
 
-					results.outputMatches(e, r);
+					//results.outputMatches(e, r);
 					Profiling.numberOfMatches++;
-					if (ConfigFlags.partitionByPred.isEmpty())
+					if (ConfigFlags.partitionByPred.isEmpty()){
 						clearTheRunFromRunList(r);
-					else
+						it.remove();
+					}
+					else{
 
 						clearThePartitionedRun(r);
-					// this.toDeleteRuns.add(r);
-					// }
+						it.remove();
+					}
+					
 				} else {
 
 					// for kleene+state
@@ -608,25 +643,35 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 						addRunByPartition(newerRun);
 
 				}
-			} else { // /change the partition of the Run, only if you're
+			} else { 
+				
+				
+		   long keynew =  this.nfa.getStates()[r.getCurrentState()].getEvetType().iterator().next();
+			if( this.nfa.getStates()[oldState].getEvetType().iterator().next() != keynew){
+				//this.activeRunsPart.put(keynew, r);
+				r.key=keynew;
+                newRunsTobeAdded.add(r);
+			}
+				// /change the partition of the Run, only if you're
 						// using the activeRunPar structure
 						// Use the older State to get the event Type and
 						// remove it from the map, and use the new
 						// state to put it back in the map
 
-				Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
+//				Set<Long> oldsID = this.nfa.getStates()[oldState].getEvetType();
+//
+//				for (long ls : oldsID) 
+//					//this.activeRunsPart.remove(ls, r);
+//					this.tobeRemoved.put(ls, r);
+//
+//				
+//				/// newRuns replaced
+//				Set<Long> newsID = this.nfa.getStates()[r.getCurrentState()].getEvetType();
+//
+//				for (long ns : newsID) 
+//					this.tobeAdded.put(ns, r);
 
-				for (long ls : oldsID) {
-					this.activeRunsPart.remove(ls, r);
-
-				}
-				/// newRuns replaced
-				Set<Long> newsID = this.nfa.getStates()[r.getCurrentState()].getEvetType();
-
-				for (long ns : newsID) {
-					this.activeRunsPart.put(ns, r);
-
-				}
+				
 
 			}
 
@@ -635,12 +680,17 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			State s = this.nfa.getStates(r.getCurrentState());
 
 			if (s.isManager()) {
-				if (ConfigFlags.partitionByPred.isEmpty())
+				if (ConfigFlags.partitionByPred.isEmpty()){
 					clearTheRunFromRunList(r);
-				else
+					it.remove();
+					
+				}
+				else{
 
 					clearThePartitionedRun(r);
-				// this.toDeleteRuns.add(r);
+					it.remove();
+				}
+				
 			}
 
 		}
@@ -734,7 +784,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		/// window, if its greater than window, then move the window tumbling
 		/// forward.
 		//
-
+//TODO: check how to map the input time window
 		if (e.getTimeStamp() - r.getLifeTimeBegin() <= nfa.getTimeWindow()) {
 			return true;
 		}
@@ -748,6 +798,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 	 */
 
 	private void clearThePartitionedRun(RunOptimised tempRun) {
+		//TODO: remove from cache should be only invoked if the event for the first state has changed something in the statful structure
 		removeFromCache(tempRun.getId());
 		ArrayList<RunOptimised> partitionedRuns = null;
 
@@ -865,9 +916,11 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 	private void addRunNormal(RunOptimised newRun) {
 		Set<Long> newsID = this.nfa.getStates()[newRun.getCurrentState()].getEvetType();
-
+		
 		for (long ns : newsID) {
-			this.activeRunsPart.put(ns, newRun);
+			//this.activeRunsPart.put(ns, newRun);
+			newRun.key=ns;
+			newRunsTobeAdded.add(newRun);
 
 		}
 	}
@@ -924,7 +977,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 		}
 	}
 
-	private void removeFromManagerState(int id, int rID) {
+	/*private void removeFromManagerState(int id, int rID) {
 		State rmoveState = nfa.getStates()[id];
 
 		if (!rmoveState.isManager()) {
@@ -951,43 +1004,63 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			}
 		}
 
-	}
+	}*/
 
 	@Override
 	protected void streamPartitionedEngine(GraphEvent e) throws CloneNotSupportedException, Exception {
-
+		
+	
+		
+		if (this.activeRunsPart.containsKey(e.getMappedContext())) 
+		{
 		evaluateRunsForStreamPartition(e);
-
+		}
 		this.createNewRunForStreamPartition(e);
 
-		Profiling.numberOfEvents += 1;
+	//	Profiling.numberOfEvents += 1;
+		
+		
+		//System.out.println(Profiling.numberOfEvents);
 
 	}
 
 	private void clearTheRunFromRunList(RunOptimised r) {
-		Set<Long> sIds = this.nfa.getStates()[r.getCurrentState()].getEvetType();
+		
+	///	r.getCurrentState() and the NFAs
+		Set<Long> sIds= this.nfa.getStates()[r.getCurrentState()].getEvetType();
+//		for (long ls :sIds) {
+//		this.tobeRemoved.put(ls, r);
+//		}
+//	
 
 		this.removeFromCache(r.getId());
 
-		for (Long id : sIds) {
-			activeRunsPart.remove(id, r);
-		}
+//		for (Long id : sIds) {
+//			activeRunsPart.remove(id, r);
+//		}
 
-		r = null;
+		//r = null;
 		Profiling.numberOfRunsCutted++;
 
 	}
 
 	private void evaluateRunsForStreamPartition(GraphEvent e) throws CloneNotSupportedException, Exception {
 
-		if (this.activeRunsPart.containsKey(e.getMappedContext())) {
+		//if (this.activeRunsPart.containsKey(e.getMappedContext())) {
 
-			streamPartitionedRuns.clear();
-			streamPartitionedRuns.addAll(activeRunsPart.get(e.getMappedContext()));
-
-			for (int i = 0; i < streamPartitionedRuns.size(); i++) {
-				RunOptimised r = streamPartitionedRuns.get(i);
-
+			//System.out.println("Size of active Runs"+activeRunsPart.size());
+		//TODO: not sure if it's a good strategy, should only go over activeRunPart and then add the older run in another list
+			// This addAll is costly
+			
+		Set<RunOptimised> toCheck = activeRunsPart.get(e.getMappedContext());
+		
+			//streamPartitionedRuns.addAll(activeRunsPart.get(e.getMappedContext()));
+		Iterator<RunOptimised> it = toCheck.iterator();
+		
+		while(it.hasNext())
+		{
+			RunOptimised r= it.next();
+	
 				if (r.isFull()) {
 					continue;
 				}
@@ -995,17 +1068,60 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				switch (ConfigFlags.selectionStrategy) // 1: STN, 2: STA, 3: SC
 				{
 				case 1:
-					this.evaluateFB(e, r);
+					this.evaluateFB(e, r,it);
+
 					break;
 
 				case 3:
 
-					this.evaluateIF(e, r);
+					this.evaluateIF(e, r,it);
 					break;
 
 				}
 
+			
+			
+			///delete the older runs and then add the new Runs
+			
+				
+			deleteOlderandAddNewruns();
+		}
+	}
+	
+	
+	private void deleteOlderandAddNewruns()
+	
+	
+	
+	{
+//		if(!tobeRemoved.isEmpty()){
+//			
+//		//	System.out.println(activeRunsPart.size());
+//	//	this.activeRunsPart.removeAll(this.tobeRemoved);
+//	//	System.out.println("The seize is... "+this._statefullcache.size());
+//		Set<Map.Entry <Long,RunOptimised>> rs = tobeRemoved.entries();
+//		
+//		for(Map.Entry <Long,RunOptimised> r: rs){
+//			this.activeRunsPart.remove(r.getKey(), r.getValue());
+//		}
+//	//	System.out.println(activeRunsPart.size());
+//		
+//		tobeRemoved.clear();
+//		
+//		}
+		
+//		if(!tobeAdded.isEmpty()){
+//		this.activeRunsPart.putAll(this.tobeAdded);
+//		tobeAdded.clear();
+//		}
+		
+		
+		if(!newRunsTobeAdded.isEmpty()){
+			for(RunOptimised rn:newRunsTobeAdded){
+				activeRunsPart.put(rn.key, rn);
 			}
+			
+			newRunsTobeAdded.clear();
 		}
 	}
 
@@ -1013,21 +1129,18 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 		State firstState = this.nfa.getStates()[0];
 
-		if (firstState.canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache, ++this.runCounter)) { // Check
-																												// if
-																												// the
-																												// incoming
-																												// event
-																												// type
-																												// can
-																												// start
-																												// the
-																												// new
-																												// run
-																												// or
-																												// not?
+		/**
+		 * Check if the event can match with the first state and hence can start a new Run
+		 */
+		//long ts = System.nanoTime();
+		
+	
+		if (firstState.canStartWithGraphEvent(e, this._statefullcache, _kbstatefullcache, ++this.runCounter)) { 
 
-			RunOptimised newRun = new RunOptimised();// this.engineRunController.getRun();
+		//	Profiling.timeforGPM+= (System.nanoTime()-ts);
+			
+		
+			RunOptimised newRun = new RunOptimised();
 			newRun.initializeRun(this.nfa, e.getTimeStamp(), this.runCounter);
 
 			newRun.addGraphEvent(e);
@@ -1035,13 +1148,16 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 			Profiling.numberOfRuns++;
 
 			Set<Long> sIds = this.nfa.getStates()[newRun.getCurrentState()].getEvetType();
-
+/**
+ * This part is for the future enhancements, where a single GPM clause will be evaluated over multiple streams at the same time
+ */
 			for (Long id : sIds) {
 				this.activeRunsPart.put(id, newRun);
 			}
 
 		} else {
-
+			
+			//Profiling.timeforGPM+= (System.nanoTime()-ts);
 			// Remove from the cache if the event doesn't match with the current
 			// state
 

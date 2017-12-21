@@ -21,6 +21,9 @@ public class RunOptimised implements Cloneable {
 	 */
 
 	private int id;
+	
+	
+	public long key;
 
 	private int clone; // 1 for yes, otherwise 0
 

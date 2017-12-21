@@ -18,11 +18,13 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
 import com.google.common.io.Files;
 
 import edu.telecom.stet.cep.events.GraphEvent;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
 import edu.telecomstet.cep.engine.optimised.AbstractSpaseqQueryProcessor;
+import edu.telecomstet.cep.engine.optimised.Profiling;
 import edu.telecomstet.cep.engine.optimised.SpsaseqQueryProcessor;
 import edu.telecomstet.cep.nfahelpers2.NFA;
 import edu.telecomstet.cep.query.helpers.QueryDescriptor;
@@ -31,7 +33,7 @@ import fr.ujm.curien.cep.inter.face.manager.StreamManager;
 
 public class SpaseqMainEngine {
 	public static void main(String[] args) throws IOException, RecognitionException, ParseException,
-			DatatypeConfigurationException, org.antlr.runtime.RecognitionException {
+			DatatypeConfigurationException {
 
 		DictionaryOpImpl dictimpl = new DictionaryOpImpl();
 		BlockingQueue<GraphEvent> queue = new ArrayBlockingQueue<GraphEvent>(100);
@@ -117,39 +119,13 @@ public class SpaseqMainEngine {
 
 		// /////////////////////////////////////
 
-		// withsystemtimestamp = true;
-
+	
+	  // System.in.read();
 		final QueryDescriptor descriptor = QueryParser.parse(q, dictimpl, kbase);
 		final CountDownLatch latch = new CountDownLatch(2);
 
-		/*
-		 * EngineController myEngineController = new EngineController();
-		 * 
-		 * myEngineController.setDict(dictimpl);
-		 * myEngineController.setNFADataList(descriptor.getNfaDataList(),
-		 * descriptor.getPattData());
-		 * myEngineController.setConstrcutClaue(descriptor.getConstRules());
-		 * 
-		 * myEngineController.setInputQueue(queue);
-		 * 
-		 * 
-		 * // TODO add this to options // boolean withsystemtimestamp=false;
-		 * ///if FALSE then take the // timestamp from the file ELSE if TRUE use
-		 * the System timestamps StreamManager cepIU = new StreamManager(st,
-		 * order, dictimpl, queue, withsystemtimestamp);
-		 * 
-		 * cepIU.setLatch(latch); Thread producer = new Thread(cepIU);
-		 * producer.setName("StreamManager"); producer.start();
-		 * System.out.println("Stream started...");
-		 * 
-		 * myEngineController.initializeEngine();
-		 * 
-		 * myEngineController.getMyEngine().setLatch(latch); new
-		 * Thread(myEngineController.getMyEngine()).start();
-		 */
-		/***
-		 * New Updated Stuff
-		 */
+		
+	///	System.in.read();
 		StreamManager cepIU = new StreamManager(st, order, dictimpl, queue, withsystemtimestamp);
 
 		cepIU.setLatch(latch);
@@ -161,9 +137,10 @@ public class SpaseqMainEngine {
 		AbstractSpaseqQueryProcessor spaseqEngine = new SpsaseqQueryProcessor(
 				new NFA(descriptor.getPattData(), descriptor.getNfaDataList()), descriptor.getNfaDataList(), dictimpl,
 				descriptor.getConstRules(), queue, latch);
-
+		//Profiling .sTime= System.nanoTime();
 		new Thread(spaseqEngine).start();
-
+		
+		
 	}
 
 	private static void help(Options opt) {

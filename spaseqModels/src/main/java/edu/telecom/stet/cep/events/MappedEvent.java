@@ -72,7 +72,7 @@ public class MappedEvent {
         }else{
       this.setSubject(dic.addResourceAdaptive((Resource)triple[0]));
         }
-       // System.out.println(mappedEvent.getSubject());
+     
        this.setProperties(dic.addResourceAdaptive((Resource)triple[1]));
         if(triple[2] instanceof Resource ){
           this.setObject(dic.addResourceAdaptive((Resource)triple[2]));
@@ -86,4 +86,4 @@ public class MappedEvent {
 }
 
 
-//~ Formatted by Jindent --- http://www.jindent.com
+

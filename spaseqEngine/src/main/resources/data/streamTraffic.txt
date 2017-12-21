@@ -1,0 +1,2 @@
+<http://www.smart.com/sensor1> </Users/syd/Documents/Code/Journal-SPASEQ-Tests/stock.data.gen/trafficdata/sensor1.n3> 3
+<http://www.smart.com/sensor2> </Users/syd/Documents/Code/Journal-SPASEQ-Tests/stock.data.gen/trafficdata/sensor2.n3> 3

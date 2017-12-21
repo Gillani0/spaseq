@@ -4,7 +4,7 @@ package edu.telecomstet.cep.engine.optimised;
 /**
  * This class profiles the numbers of performance
  * 
- * @author haopeng
+
  *
  */
 public class Profiling {
@@ -46,6 +46,13 @@ public class Profiling {
 	public static long negatedMatches = 0;
 
 	public static String outputDirectory = "";
+	
+	public static long sTime=0;
+	public static long eTime=0;
+	
+	public static long timeToParseRDF=0;
+	
+	public static long timeforGPM=0;
 
 	/**
 	 * resets the profiling numbers
@@ -68,25 +75,35 @@ public class Profiling {
 	 * prints the profiling numbers in console
 	 */
 	public static void printProfiling() {
-
+	
+	//	totalRunTime = eTime - sTime;
 		System.out.println();
 		System.out.println("**************Profiling Numbers*****************");
-		// System.out.println("Total Running Time: " + totalRunTime + "
-		// nanoseconds");
+		 System.out.println("Total Running Time: " + totalRunTime + " Ns");
 		System.out.println("Number Of Events Processed: " + numberOfEvents);
 		System.out.println("Number Of Runs Created: " + numberOfRuns);
 		System.out.println("Number Of Matches Found: " + numberOfMatches);
 		System.out.println("Number Of Deleted Runs: " + numberOfRunsCutted);
+		System.out.println("Time to Parse RDF Events: " + timeToParseRDF +" Ns");
+		System.out.println("Time for GPM: " + timeforGPM+" Ns");
+		System.out.println("Time for Checking Partial Matches: " + (totalRunTime- timeforGPM) +" Ns");
+		
+		long gpm= timeforGPM/1000000000;
+		long tt = totalRunTime/1000000000;
+		
+		long dif = totalRunTime -timeforGPM;
+		System.out.println("% TIme: " + (timeforGPM/totalRunTime));
+		//System.out.println("Last Event Time: " + eTime);
 
 		if (ConfigFlags.hasNegation) {
 			System.out.println("Number of Negated Matches: " + negatedMatches);
 		}
 
 		long throughput1 = 0;
-		// if(totalRunTime > 0){
-		// throughput1 = numberOfEvents* 1000000000/totalRunTime ;
-		// System.out.println("Throughput: " + throughput1 + " events/second");
-		// }
+		 if(totalRunTime > 0){
+		 throughput1 = numberOfEvents* 1000000000/totalRunTime ;
+		 System.out.println("Throughput: " + throughput1 + " events/second");
+		 }
 
 	}
 

@@ -1,0 +1,1 @@
+<http://example.org/main> </Users/syd/Documents/Code/Journal-SPASEQ-Tests/stock.data.gen/card20k.n3> 2

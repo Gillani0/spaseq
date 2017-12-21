@@ -56,7 +56,7 @@ public class GraphPruning implements GraphPruningAPI {
 														/// for each triple
 														/// pattern
 
-			// }
+			
 
 			if (!s.getRule().getC2().isEmpty()) {
 				s.getRule().getC2().clear();

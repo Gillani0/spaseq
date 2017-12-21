@@ -4,8 +4,9 @@
                         
                        
 
-                        SELECT ?company ?vol1
-                         WITHIN 10 SECONDS 
+                        SELECT ?company ?p1
+                         WITHIN 100 SECONDS 
+                        
                  FROM STREAM S1 <http://example.org/main> 
                
                         WHERE 
@@ -20,16 +21,16 @@
                              
          DEFINE GPM B ON S1
                   {
- 					?company2 pred:price ?p2.
-					?company2 pred:volume ?vol2. 
-					Filter (?p2 < ?p1 ).
+ 					?company pred:price ?p2.
+					?company pred:volume ?vol2. 
+					Filter (?p2 > ?p1 ).
                    }
 
            DEFINE GPM C ON S1
                   {
-                  ?company3 pred:price ?p3.
-                  ?company3 pred:volume ?vol3. 
-                  Filter ( ?p3 = ?p1).  
+                  ?company pred:price ?p3.
+                  ?company pred:volume ?vol3. 
+                  Filter ( ?p3 < ?p2).  
                   }
            
      

@@ -6,13 +6,13 @@
                         
                        
 
-                        SELECT ?company ?p1 ?p2 ?p3 ?name ?loc
-                         WITHIN 10 SECONDS 
-                      Partition by (?company)  
+                        SELECT ?company ?name ?phone ?url
+                         WITHIN 100 SECONDS 
+                    
                  FROM STREAM S1 <http://example.org/main> 
                
                         WHERE 
-                         SEQ (A, B, C)
+                         SEQ (A; B; C)
                            {
               DEFINE GPM A ON S1
           
@@ -30,7 +30,7 @@
                           ?company pred:price ?p2.
                           ?company pred:volume ?vol2. 
                           
-                            Filter (?p2 < ?p1 ).
+                            Filter (?p2 > ?p1 ).
                             
                              }
                
@@ -46,11 +46,13 @@
                           GRAPH <http://www.example.com/kb>
                           {
                           ?company pred:name ?name.
-                          ?company pred:location ?loc.
+                          ?company pred:phone ?phone.
+                          ?company pred:url ?url.
+                            ?company pred:lang ?lang.
 
                           }
                           
-                            Filter (?p3 = ?p1).  
+                            Filter (?p3 < ?p2).  
                              }
               
                      

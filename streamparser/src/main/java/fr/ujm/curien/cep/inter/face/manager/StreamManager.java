@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+
 import org.semanticweb.yars.nx.Literal;
 import org.semanticweb.yars.nx.Node;
 import org.semanticweb.yars.nx.Resource;
@@ -50,6 +51,7 @@ public class StreamManager implements Runnable {
 	private boolean systemTime;
 	private long START_OF_THE_STREAM;
 
+	public static long PARSINGTIME;
 	private long eventID = 0;
 
 	/**
@@ -93,11 +95,13 @@ public class StreamManager implements Runnable {
 	public void run() {
 		this.openReaders();
 		this.START_OF_THE_STREAM = System.nanoTime();
+		int count =0;
 		if (random) {
 			do {
 				GraphEvent record = this.readRound();
-
-				if (record != null) {
+                count++;
+             //   System.out.println("Count is .. "+ count);
+				if (record != null && count <10000 ) {
 					try {
 						this.queue.put(record);
 					} catch (InterruptedException e) {
@@ -109,6 +113,7 @@ public class StreamManager implements Runnable {
 			try {
 				// GraphEvent(int id, long t, DictionaryOpImpl d, long
 				// c,MappedEvent[] mp){
+				PARSINGTIME = System.nanoTime() - START_OF_THE_STREAM;
 				this.queue.put(new GraphEvent(-1, 0, null, 0, new ArrayList<MappedEvent>()));
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -130,6 +135,7 @@ public class StreamManager implements Runnable {
 			} while (finishedStreams != nbFile);
 
 			try {
+				PARSINGTIME = System.nanoTime() - START_OF_THE_STREAM;
 				this.queue.put(new GraphEvent(-1, 0, null, 0, new ArrayList<MappedEvent>()));
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block

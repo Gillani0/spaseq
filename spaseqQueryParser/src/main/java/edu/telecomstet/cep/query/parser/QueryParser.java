@@ -33,7 +33,7 @@ import edu.telecomstet.cep.query.sources.StreamingSparql;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import org.antlr.runtime.RecognitionException;
+//import org.antlr.runtime.RecognitionException;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -44,7 +44,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 public interface QueryParser
  {
     public static QueryDescriptor parse(String query, DictionaryOpImpl dict, String kbFile)
-            throws RecognitionException, ParseException, DatatypeConfigurationException, FileNotFoundException {
+            throws  ParseException, DatatypeConfigurationException, FileNotFoundException {
         SparqlLexer       lexer       = new SparqlLexer(new ANTLRInputStream(query));
         CommonTokenStream tokens      = new CommonTokenStream(lexer);
         StreamingSparql   parser      = new StreamingSparql(tokens);

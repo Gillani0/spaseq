@@ -9,7 +9,7 @@
                  FROM STREAM S1 <http://example.org/main> 
                
                         WHERE 
-                         SEQ (A, (B&C), D)
+                         SEQ (A, (B&C))
                            {
        DEFINE GPM A ON S1
                  { 
@@ -32,12 +32,6 @@
                   Filter ( ?p3 > ?p1).  
                   }
                   
-                            DEFINE GPM D ON S1
-                  {
-                  ?company4 pred:price ?p4.
-                  ?company4 pred:volume ?vol4. 
-                  Filter (?p4 = '16.0'^^<http://www.w3.org/2001/XMLSchema#double>).
-                  }
            
      
                      

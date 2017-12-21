@@ -4,7 +4,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.jcwhatever.nucleus.collections.MultiBiMap;
@@ -14,6 +16,7 @@ import edu.telecom.stet.cep.datastructure.MultiBidirectionalIndex;
 import edu.telecom.stet.cep.datastructure.RunStateMap;
 import edu.telecom.stet.cep.datastructure.SP;
 import edu.telecom.stet.cep.events.GraphEvent;
+import edu.telecomstet.cep.engine.optimised.Profiling;
 import edu.telecomstet.cep.rulesmodel.NFAData;
 import net.openhft.koloboke.collect.map.hash.HashIntLongMaps;
 import net.openhft.koloboke.collect.map.hash.HashIntObjMaps;
@@ -249,7 +252,10 @@ public final class State {
 		// boolean result;
 
 		if (this.evetType.contains(e.getMappedContext())) {
+			
+			
 			return this.edges[0].evaluatePredicateandStatQuery(e, this, cache, kbcache, r);
+			
 		}
 
 		return false;

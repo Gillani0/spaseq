@@ -1,1 +1,1 @@
-<http://example.org/main> <./src/main/resources/data/dataFB.nt> 2
+<http://example.org/main> </Users/syd/Documents/Code/Journal-SPASEQ-Tests/stock.data.gen/stock40min.nt> 2

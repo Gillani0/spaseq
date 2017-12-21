@@ -14,7 +14,7 @@ import edu.telecom.stet.cep.datastructure.SP;
 import edu.telecomstet.cep.dictionary.optimised.DictionaryOpImpl;
 import edu.telecomstet.cep.graph.automata.Automata;
 import edu.telecomstet.cep.graph.automata.AutomataState;
-import edu.telecomstet.cep.statefull.StateFull_Cache;
+
 import java.util.HashMap;
 
 /**
