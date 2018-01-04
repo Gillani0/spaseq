@@ -1,1 +1,0 @@
-<http://example.org/main> <./followedby/dataFB.nt> 2

@@ -1,3 +1,0 @@
-<http://www.smart.com/power> <./multistreams/power1.nt> 5
-<http://www.smart.com/environmental> <./multistreams/environmental1.nt> 5
-<http://www.smart.com/generation> <./multistreams/generation1.nt> 5

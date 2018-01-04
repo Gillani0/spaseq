@@ -1,0 +1,2 @@
+<http://www.smart.com/sensor1> <./sensor1.n3> 3
+<http://www.smart.com/sensor2> <./sensor2.n3> 3

@@ -201,7 +201,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 
 				if (r.isFull()) {
 
-					//results.outputMatches(e, r);
+					results.outputMatches(e, r);
 					Profiling.numberOfMatches++;
 
 					if (ConfigFlags.partitionByPred.isEmpty()){
@@ -610,7 +610,7 @@ public class SpsaseqQueryProcessor extends AbstractSpaseqQueryProcessor {
 				//
 				if (r.isFull()) {
 
-					//results.outputMatches(e, r);
+					results.outputMatches(e, r);
 					Profiling.numberOfMatches++;
 					if (ConfigFlags.partitionByPred.isEmpty()){
 						clearTheRunFromRunList(r);
